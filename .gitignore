@@ -1,0 +1,64 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+*.log
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Jupyter / IPython
+.ipynb_checkpoints/
+*.ipynb
+
+# VSCode 설정
+.vscode/
+*.code-workspace
+
+# 시스템 파일
+.DS_Store
+Thumbs.db
+
+# 환경 변수 파일
+.env
+.env.*
+
+# 데이터 파일
+data/*.jsonl
+data/*.csv
+data/*.txt
+data/*.xlsx
+data/*.parquet
+data/*.pkl
+data/*.db
+
+# PyCharm
+.idea/
+
+# 모델, 임시 파일
+*.h5
+*.pt
+*.ckpt
+*.pkl
+*.joblib
+*.sav
+
+# 테스트 결과
+htmlcov/
+.tox/
+coverage.xml
+.cache/
+.pytest_cache/
+nosetests.xml
+test-results/
+
+# 기타
+logs/
+*.bak
+*.swp

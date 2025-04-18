@@ -1,0 +1,40 @@
+# ✅ 기본 유틸
+python-dotenv
+requests
+pillow
+tqdm
+
+# ✅ Kafka
+kafka-python
+
+# ✅ YouTube API
+google-api-python-client
+
+# ✅ Spark 연동 코드용 (Spark 자체는 Docker에서 실행)
+pyspark==3.3.0
+
+# ✅ 키워드 추출 (Spark 내부 TF-IDF용)
+nltk
+yake
+
+# ✅ OCR
+pytesseract
+
+# ✅ LLM Agent
+langchain
+openai
+serpapi
+
+# ✅ Elasticsearch
+elasticsearch
+sentence-transformers  # 벡터화 용도
+
+# ✅ Neo4j
+neo4j
+
+# ✅ FastAPI + API 서버
+fastapi
+uvicorn[standard]
+
+# ✅ 기타 (데이터 처리)
+pandas
