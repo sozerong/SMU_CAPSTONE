@@ -1,43 +1,51 @@
-project-root/
-├── docker/
-│   ├── docker-compose.yml        # Kafka + Zookeeper + Spark 등 실행
-│   └── init/                     # 초기 설정 스크립트 (옵션)
+# 🍽️ Menu Trend Graph Project
+
+키워드를 기반으로 트렌디한 조합 키워드를 생성하고, 이를 LLM을 통해 분류/설명한 뒤 Neo4j에 구조화하여 저장하는 데이터 파이프라인 프로젝트입니다.
+
+---
+
+## 📌 프로젝트 개요
+
+- 실시간 크롤링된 YouTube 데이터를 기반으로 키워드 추출 (TF-IDF)
+- 연속 명사 기반 키워드 후처리 + LLM을 통해 카페메뉴뉴 관련 키워드만 필터링
+- LLM이 키워드 조합을 생성 (예: "노오븐 초코 치즈케이크")
+- 생성된 키워드를 LLM Agent가 요약 정보 구성 (설명, 카테고리, 예시, 계절 등)
+- 최종 결과를 Neo4j에 관계형 그래프 구조로 저장
+
+---
+
+## 📂 폴더 구조
+
+```bash
+project/
+├── agent/                     # LLM Agent 관련 코드
+│   ├── keyword_agent.py       # SerpAPI/Playwright 기반 정보 수집 Agent
+│   ├── food_filter.py         # 카페메뉴뉴 키워드 필터링 LLM
+│   ├── keyword_combined.py    # LLM이 키워드 조합 생성 + count 반영
+│   └── keyword_info_collector.py # 조합 키워드에 대해 정보 수집 Agent
 │
-├── kafka/
-│   └── youtube_crawler.py        # YouTube → Kafka 발행 스크립트
+├── data/                      # 중간 생성 데이터
+│   ├── keywords.jsonl
+│   ├── filtered_keywords_with_count.jsonl
+│   ├── generated_keywords_with_new_count.jsonl
+│   └── neo4j_ready_keywords.jsonl
 │
-├── spark/
-│   ├── spark_tfidf_keywords.py   # Kafka → Spark → TF-IDF 키워드 추출
-│   ├── spark_to_neo4j.py         # Spark → Neo4j 관계 저장
-│   └── spark_to_elasticsearch.py # Spark → Elasticsearch 저장
+├── kafka/                     # Kafka 기반 YouTube 데이터 수집
+│   └── youtube_crawler.py
 │
-├── agent/
-│   ├── keyword_agent.py          # LLM Agent로 키워드 정보 수집
-│   └── crawler_cache.py          # (선택) Redis로 크롤링 결과 캐싱
+├── spark/                     # Spark 기반 TF-IDF 추출
+│   └── spark_keyword.py
 │
-├── elasticsearch/
-│   ├── init_es_index.py          # ES 인덱스 생성 스크립트
-│   └── embedding_utils.py        # 벡터 임베딩 생성 도구 (sentence-transformers 등)
+├── neo4j/                     # Neo4j 구조 저장 관련 코드
+│   ├── neo4j_schema.py        # 생성된 키워드와 정보, 관계 저장 코드
+│   └── reset_graph.py         # 전체 그래프 삭제 (초기화)
 │
-├── neo4j/
-│   └── neo4j_schema.py           # 노드/관계 생성용 초기 스크립트
+├── configs/                   # 환경변수 파일 (.env)
+│   └── .env
 │
-├── api/
-│   ├── main.py                   # FastAPI 서버
-│   ├── chatgpt_response.py      # GPT 응답 생성
-│   └── query_service.py         # ES/Neo4j 질의 + 통합
-│
-├── configs/
-│   ├── es_config.json            # Elasticsearch 관련 설정
-│   ├── neo4j_config.json         # Neo4j 연결 정보
-│   └── .env                      # API KEY 등 환경 변수
-│
-├── data/
-│   ├── raw/                      # 크롤링된 원시 JSON (optional)
-│   ├── keywords.jsonl            # Spark에서 추출된 키워드
-│   └── keyword_infos.jsonl       # LLM Agent 크롤링 결과
-│
+├── .gitignore
 └── README.md
+
 
 
 1. kafka/youtube_crawler.py
@@ -47,4 +55,4 @@ project-root/
 5. 
 6. agent/keyword_combined.py
 7. agent/keyword_info_collector.py
-agent/keyword_inf_collect.py
+8. neo4j/neo4j_schema.py
