@@ -38,6 +38,14 @@ data/*.parquet
 data/*.pkl
 data/*.db
 
+data/**/*.jsonl
+data/**/*.csv
+data/**/*.txt
+data/**/*.xlsx
+data/**/*.parquet
+data/**/*.pkl
+data/**/*.db
+
 # PyCharm
 .idea/
 
