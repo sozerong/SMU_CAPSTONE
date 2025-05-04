@@ -7,7 +7,7 @@
 ## 📌 프로젝트 개요
 
 - 실시간 크롤링된 YouTube 데이터를 기반으로 키워드 추출 (TF-IDF)
-- 연속 명사 기반 키워드 후처리 + LLM을 통해 카페메뉴뉴 관련 키워드만 필터링
+- 연속 명사 기반 키워드 후처리 + LLM을 통해 카페메뉴 관련 키워드만 필터링
 - LLM이 키워드 조합을 생성 (예: "노오븐 초코 치즈케이크")
 - 생성된 키워드를 LLM Agent가 요약 정보 구성 (설명, 카테고리, 예시, 계절 등)
 - 최종 결과를 Neo4j에 관계형 그래프 구조로 저장
@@ -20,7 +20,7 @@
 project/
 ├── agent/                     # LLM Agent 관련 코드
 │   ├── keyword_agent.py       # SerpAPI/Playwright 기반 정보 수집 Agent
-│   ├── food_filter.py         # 카페메뉴뉴 키워드 필터링 LLM
+│   ├── food_filter.py         # 카페메뉴 키워드 필터링 LLM
 │   ├── keyword_combined.py    # LLM이 키워드 조합 생성 + count 반영
 │   └── keyword_info_collector.py # 조합 키워드에 대해 정보 수집 Agent
 │
@@ -51,8 +51,8 @@ project/
 1. kafka/youtube_crawler.py
 2. spark/spark_keyword.py
 3. agent/food_fillter.py
-4. food_labeler.py
-5. 
-6. agent/keyword_combined.py
-7. agent/keyword_info_collector.py
-8. neo4j/neo4j_schema.py
+4. agent/keyword_info_collector.py
+5. neo4j/neo4j_schema.py
+6. GragpRAG/graphrag_aq.py
+7. Postgresql/save_PSQL.py
+8. movefile.py
