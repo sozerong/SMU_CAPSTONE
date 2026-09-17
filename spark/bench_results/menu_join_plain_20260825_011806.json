@@ -1,0 +1,288 @@
+{
+  "args": {
+    "mode": "plain",
+    "repeat": 3,
+    "shuffle_partitions": 16,
+    "salt_buckets": 16,
+    "hot_keys": 5
+  },
+  "p50": 34.87815810000001,
+  "runs": [
+    {
+      "mode": "plain",
+      "join_type": "SortMergeJoin",
+      "menu_rows": 216441,
+      "keyword_rows": 6494,
+      "matched_keywords": 68,
+      "total_seconds": 41.8119253,
+      "load_seconds": 9.036824100000002,
+      "agg_seconds": 11.503820099999999,
+      "skew": {
+        "partitions": 16.0,
+        "nonempty": 16.0,
+        "max": 18842.0,
+        "median": 3933.5,
+        "min": 186.0,
+        "max_over_median": 4.790136011185966,
+        "total": 84850.0
+      },
+      "hot_keys": [],
+      "top": [
+        {
+          "keyword": "크림",
+          "cafe_count": 11473,
+          "menu_rows": 14941,
+          "gu_count": 25,
+          "avg_price": 5740.0
+        },
+        {
+          "keyword": "녹차",
+          "cafe_count": 9679,
+          "menu_rows": 10226,
+          "gu_count": 25,
+          "avg_price": 5725.0
+        },
+        {
+          "keyword": "초코",
+          "cafe_count": 5125,
+          "menu_rows": 5929,
+          "gu_count": 25,
+          "avg_price": 5736.0
+        },
+        {
+          "keyword": "그릭 요거트",
+          "cafe_count": 2594,
+          "menu_rows": 2765,
+          "gu_count": 25,
+          "avg_price": 5708.0
+        },
+        {
+          "keyword": "딸기 케이크",
+          "cafe_count": 2423,
+          "menu_rows": 2555,
+          "gu_count": 25,
+          "avg_price": 5830.0
+        },
+        {
+          "keyword": "티라미수",
+          "cafe_count": 2371,
+          "menu_rows": 2530,
+          "gu_count": 25,
+          "avg_price": 5709.0
+        },
+        {
+          "keyword": "딸기 우유",
+          "cafe_count": 2059,
+          "menu_rows": 2169,
+          "gu_count": 25,
+          "avg_price": 5792.0
+        },
+        {
+          "keyword": "딸기 시루",
+          "cafe_count": 2047,
+          "menu_rows": 2162,
+          "gu_count": 25,
+          "avg_price": 5834.0
+        },
+        {
+          "keyword": "쿠키",
+          "cafe_count": 2044,
+          "menu_rows": 2161,
+          "gu_count": 25,
+          "avg_price": 5765.0
+        },
+        {
+          "keyword": "딸기",
+          "cafe_count": 2039,
+          "menu_rows": 2136,
+          "gu_count": 25,
+          "avg_price": 5733.0
+        }
+      ]
+    },
+    {
+      "mode": "plain",
+      "join_type": "SortMergeJoin",
+      "menu_rows": 216441,
+      "keyword_rows": 6494,
+      "matched_keywords": 68,
+      "total_seconds": 33.43555009999999,
+      "load_seconds": 6.286337699999997,
+      "agg_seconds": 10.447922700000007,
+      "skew": {
+        "partitions": 16.0,
+        "nonempty": 16.0,
+        "max": 18842.0,
+        "median": 3933.5,
+        "min": 186.0,
+        "max_over_median": 4.790136011185966,
+        "total": 84850.0
+      },
+      "hot_keys": [],
+      "top": [
+        {
+          "keyword": "크림",
+          "cafe_count": 11473,
+          "menu_rows": 14941,
+          "gu_count": 25,
+          "avg_price": 5740.0
+        },
+        {
+          "keyword": "녹차",
+          "cafe_count": 9679,
+          "menu_rows": 10226,
+          "gu_count": 25,
+          "avg_price": 5725.0
+        },
+        {
+          "keyword": "초코",
+          "cafe_count": 5125,
+          "menu_rows": 5929,
+          "gu_count": 25,
+          "avg_price": 5736.0
+        },
+        {
+          "keyword": "그릭 요거트",
+          "cafe_count": 2594,
+          "menu_rows": 2765,
+          "gu_count": 25,
+          "avg_price": 5708.0
+        },
+        {
+          "keyword": "딸기 케이크",
+          "cafe_count": 2423,
+          "menu_rows": 2555,
+          "gu_count": 25,
+          "avg_price": 5830.0
+        },
+        {
+          "keyword": "티라미수",
+          "cafe_count": 2371,
+          "menu_rows": 2530,
+          "gu_count": 25,
+          "avg_price": 5709.0
+        },
+        {
+          "keyword": "딸기 우유",
+          "cafe_count": 2059,
+          "menu_rows": 2169,
+          "gu_count": 25,
+          "avg_price": 5792.0
+        },
+        {
+          "keyword": "딸기 시루",
+          "cafe_count": 2047,
+          "menu_rows": 2162,
+          "gu_count": 25,
+          "avg_price": 5834.0
+        },
+        {
+          "keyword": "쿠키",
+          "cafe_count": 2044,
+          "menu_rows": 2161,
+          "gu_count": 25,
+          "avg_price": 5765.0
+        },
+        {
+          "keyword": "딸기",
+          "cafe_count": 2039,
+          "menu_rows": 2136,
+          "gu_count": 25,
+          "avg_price": 5733.0
+        }
+      ]
+    },
+    {
+      "mode": "plain",
+      "join_type": "SortMergeJoin",
+      "menu_rows": 216441,
+      "keyword_rows": 6494,
+      "matched_keywords": 68,
+      "total_seconds": 34.87815810000001,
+      "load_seconds": 6.348177100000001,
+      "agg_seconds": 10.2517407,
+      "skew": {
+        "partitions": 16.0,
+        "nonempty": 16.0,
+        "max": 18842.0,
+        "median": 3933.5,
+        "min": 186.0,
+        "max_over_median": 4.790136011185966,
+        "total": 84850.0
+      },
+      "hot_keys": [],
+      "top": [
+        {
+          "keyword": "크림",
+          "cafe_count": 11473,
+          "menu_rows": 14941,
+          "gu_count": 25,
+          "avg_price": 5740.0
+        },
+        {
+          "keyword": "녹차",
+          "cafe_count": 9679,
+          "menu_rows": 10226,
+          "gu_count": 25,
+          "avg_price": 5725.0
+        },
+        {
+          "keyword": "초코",
+          "cafe_count": 5125,
+          "menu_rows": 5929,
+          "gu_count": 25,
+          "avg_price": 5736.0
+        },
+        {
+          "keyword": "그릭 요거트",
+          "cafe_count": 2594,
+          "menu_rows": 2765,
+          "gu_count": 25,
+          "avg_price": 5708.0
+        },
+        {
+          "keyword": "딸기 케이크",
+          "cafe_count": 2423,
+          "menu_rows": 2555,
+          "gu_count": 25,
+          "avg_price": 5830.0
+        },
+        {
+          "keyword": "티라미수",
+          "cafe_count": 2371,
+          "menu_rows": 2530,
+          "gu_count": 25,
+          "avg_price": 5709.0
+        },
+        {
+          "keyword": "딸기 우유",
+          "cafe_count": 2059,
+          "menu_rows": 2169,
+          "gu_count": 25,
+          "avg_price": 5792.0
+        },
+        {
+          "keyword": "딸기 시루",
+          "cafe_count": 2047,
+          "menu_rows": 2162,
+          "gu_count": 25,
+          "avg_price": 5834.0
+        },
+        {
+          "keyword": "쿠키",
+          "cafe_count": 2044,
+          "menu_rows": 2161,
+          "gu_count": 25,
+          "avg_price": 5765.0
+        },
+        {
+          "keyword": "딸기",
+          "cafe_count": 2039,
+          "menu_rows": 2136,
+          "gu_count": 25,
+          "avg_price": 5733.0
+        }
+      ]
+    }
+  ]
+}
