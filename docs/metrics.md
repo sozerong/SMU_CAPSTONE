@@ -91,8 +91,34 @@ LLM 신뢰구간 하한 43.3% 가 기준선 6.1% 를 한참 넘는다. **LLM 단
 `CONTAINS_INGREDIENT` 를 만드는 코드가 없는데 `OPTIONAL MATCH` 로 조회해
 모든 재료의 `usage_count` 가 0 이 되고 정렬이 근거를 잃었다.
 
-**Cypher 는 고쳤다**(`GragpRAG/candidates.py`). 생성률 재측정에는 OpenAI 키가 필요해
-아직 못 했으므로 **이 칸은 미달로 남겨 둔다.** 고쳤다고 적고 넘어가면 측정이 아니다.
+**Cypher 는 고쳤다**(`GragpRAG/candidates.py`). 생성률 재측정은 아직 못 했으므로
+**이 칸은 미달로 남겨 둔다.** 고쳤다고 적고 넘어가면 측정이 아니다.
+
+### 재측정 설계 — 그냥 다시 재면 안 되는 이유
+
+기존 50.0% 는 **gpt-4** 로 잰 값이다. 비용 때문에 다른 모델로 다시 재면 차이가
+Cypher 수정 때문인지 모델 때문인지 구분할 수 없다. 교란 변수가 생긴다.
+
+그래서 재측정이 아니라 **A/B** 로 간다 (`GragpRAG/eval_grounding_ab.py`).
+
+| 팔 | 후보 | 나머지 조건 |
+|---|---|---|
+| A (before) | 옛 Cypher (`CONTAINS_INGREDIENT`) | 동일 |
+| B (after) | 새 Cypher (`INCLUDES`/`IS_COMBO_WITH`) | 동일 |
+
+같은 모델·temperature·프롬프트·질문·반복 수에서 **후보 목록만 다르다.**
+두 팔의 차이는 전부 Cypher 에서 온다. 메뉴 경로는 수정 대상이 아니라 **통제군**이 된다
+(두 팔이 비슷하게 나와야 측정이 믿을 만하다).
+
+프롬프트는 복사하지 않는다. 자체 검증이 `graphrag_aq.py` 소스를 읽어 문구와 질문 목록이
+일치하는지 대조한다. 베껴 두면 원본이 바뀔 때 갈라져 "같은 조건"이 아니게 된다.
+
+```bash
+python GragpRAG/eval_grounding_ab.py --repeat 4 --model gpt-4o-mini
+```
+
+**실행 시도 결과: API 크레딧 잔액 0 (`429 insufficient_quota`).**
+키는 유효했고 호출이 한 건도 나가지 않았다. 스크립트와 자체 검증은 준비돼 있다.
 
 ### 대신 잰 것 — 후보 목록의 품질
 
@@ -244,6 +270,7 @@ python agent/eval_filter.py score           # 정밀도 / 재현율
 python agent/eval_filter.py baseline        # LLM 없는 기준선 대조
 python GragpRAG/eval_grounding.py           # 후보 밖 생성률 (저장된 답변)
 python GragpRAG/eval_candidates.py          # 후보 목록 전/후 (Neo4j 필요)
+python GragpRAG/eval_grounding_ab.py --repeat 4 --model gpt-4o-mini   # A/B (OpenAI 키·크레딧 필요)
 python neo4j/cleanup.py stats               # 그래프 현황 + 고아 노드
 python spark/verify_reproducibility.py compare data/8차/keywords.jsonl data/2025-05-03/keywords.jsonl
 python spark/menu_join.py --mode salt --repeat 3

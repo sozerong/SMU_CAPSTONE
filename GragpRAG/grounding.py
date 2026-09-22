@@ -44,6 +44,28 @@ def is_grounded(name: str, candidates: List[str], strict: bool = False) -> bool:
     return any(c and c in n for c in cands)
 
 
+def strip_code_fence(s: str) -> str:
+    """
+    ```json ... ``` 펜스를 벗긴다.
+
+    gpt-4 는 JSON 을 그대로 돌려주지만 gpt-4o-mini 는 마크다운 펜스로 감싼다.
+    벗기지 않으면 `json.loads` 가 전부 실패해 **모델을 바꾸는 순간 전량 dead letter** 가 된다.
+    파싱 실패로 집계되니 원인도 "모델이 형식을 안 지킨다"로 오독된다.
+
+    펜스가 없으면 원문을 그대로 돌려주므로 기존 gpt-4 산출물의 판정은 바뀌지 않는다.
+    """
+    t = s.strip()
+    if not t.startswith("```"):
+        return s
+    t = t[3:]
+    # ```json / ```JSON 처럼 언어 태그가 붙는다. 첫 줄바꿈까지가 태그다.
+    nl = t.find("\n")
+    if nl != -1 and t[:nl].strip().isalpha():
+        t = t[nl + 1:]
+    end = t.rfind("```")
+    return t[:end] if end != -1 else t
+
+
 def validate_answer(content: Any, candidates: List[str]) -> Tuple[bool, Any]:
     """
     LLM 응답 검증. 통과하면 `(True, 파싱된 리스트)`, 아니면 `(False, 사유)`.
@@ -57,7 +79,7 @@ def validate_answer(content: Any, candidates: List[str]) -> Tuple[bool, Any]:
     """
     if isinstance(content, str):
         try:
-            parsed = json.loads(content)
+            parsed = json.loads(strip_code_fence(content))
         except (json.JSONDecodeError, ValueError):
             return False, "json_parse_error"
     else:
@@ -124,6 +146,22 @@ def demo() -> None:
 
     # 후보가 비면 아무것도 후보 안이 아니다
     assert not is_grounded("딸기", [])
+
+    # 마크다운 펜스 — gpt-4o-mini 가 이 형식으로 답한다.
+    # 벗기지 못하면 모델을 바꾸는 순간 전량 json_parse_error 가 된다.
+    fenced = '```json\n[{"name": "딸기 케이크", "description": "x"}]\n```'
+    ok, parsed = validate_answer(fenced, cands)
+    assert ok and parsed[0]["name"] == "딸기 케이크", (ok, parsed)
+
+    assert strip_code_fence('```\n[1]\n```').strip() == "[1]"        # 언어 태그 없음
+    assert strip_code_fence('```JSON\n[1]\n```').strip() == "[1]"    # 대문자 태그
+    assert strip_code_fence('[1]') == '[1]'                          # 펜스 없으면 그대로
+    # 닫는 펜스가 없어도 앞부분은 살린다 (응답이 잘린 경우)
+    assert strip_code_fence('```json\n[1]').strip() == "[1]"
+
+    # 펜스를 벗겨도 후보 밖 판정은 그대로 걸려야 한다
+    ok, reason = validate_answer('```json\n[{"name": "망고 빙수"}]\n```', cands)
+    assert not ok and reason.startswith("ungrounded:"), (ok, reason)
 
     print("grounding 자체 검증 통과")
 

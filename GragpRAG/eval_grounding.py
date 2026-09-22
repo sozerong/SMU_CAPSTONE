@@ -36,7 +36,7 @@ PATTERN  = os.path.join(BASE_DIR, "data", "**", "*graphrag*.jsonl")
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 # 판정 기준의 단일 출처. graphrag_aq.py 의 런타임 격리도 같은 모듈을 쓴다 —
 # 생성 시점과 측정 시점의 기준이 갈라지면 둘 다 못 믿게 된다.
-from grounding import is_grounded, normalize as norm   # noqa: E402
+from grounding import is_grounded, normalize as norm, strip_code_fence   # noqa: E402
 
 
 def parse_answer(answer: Any) -> Tuple[Optional[List[str]], str]:
@@ -49,9 +49,10 @@ def parse_answer(answer: Any) -> Tuple[Optional[List[str]], str]:
         return None, "answer 없음"
 
     # 문자열이면 JSON 인지 먼저 확인 (JSON 이 문자열로 저장된 경우가 있다)
+    # 펜스 제거는 grounding.strip_code_fence 를 쓴다 — 생성 시점의 판정과 같은 기준이어야 한다.
     if isinstance(answer, str):
         try:
-            answer = json.loads(answer)
+            answer = json.loads(strip_code_fence(answer))
         except (json.JSONDecodeError, ValueError):
             return None, "산문 답변 (구조화 안 됨)"
 
