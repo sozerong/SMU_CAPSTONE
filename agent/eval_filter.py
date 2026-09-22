@@ -275,6 +275,107 @@ def cmd_score() -> None:
     print(f"\n  저장: {os.path.relpath(path, BASE_DIR)}")
 
 
+def read_label_map(path: str) -> Dict[str, str]:
+    """keyword → 'y'/'n'. 미기입은 넣지 않는다."""
+    out: Dict[str, str] = {}
+    with open(path, encoding="utf-8-sig", newline="") as f:
+        for row in csv.DictReader(f):
+            v = (row.get("label") or "").strip().lower()
+            if v in ("y", "yes", "1", "o", "예"):
+                out[row["keyword"]] = "y"
+            elif v in ("n", "no", "0", "x", "아니오"):
+                out[row["keyword"]] = "n"
+    return out
+
+
+def cmd_baseline() -> None:
+    """
+    LLM 이 값을 하는가 — 기준선 대조
+
+    "정밀도 57.1% 가 좋은 값인가"는 목표치를 내가 정하면 답이 안 된다.
+    비교 대상이 있어야 한다. 가장 정직한 대조군은 **LLM 을 빼는 것**이다.
+
+        food_fillter.py 는 322개를 score_priority 로 정렬한 뒤 LLM 에 넘겨 49개를 받는다.
+        LLM 을 빼고 같은 정렬의 상위 49개를 그냥 쓰면 정밀도가 얼마인가?
+
+    같은 개수(49)를 내므로 공평한 대조다. LLM 이 이 값을 못 넘기면
+    API 비용과 비결정성을 지불할 근거가 없다.
+
+    추정 방식 — 층화(stratified)
+        상위 49개는 두 층으로 나뉜다.
+          ① LLM 도 고른 것  → 49건 전수 라벨이 있다
+          ② LLM 이 버린 것  → 273건 중 무작위 100건 표본에 일부가 들어 있다
+        ②는 무작위 표본이므로 그 안의 메뉴 비율을 층 전체에 적용한다.
+        층별 개수로 가중해 합치면 상위 49개의 메뉴 비율이 나온다.
+
+    ②의 표본이 작으면 추정이 흔들린다. 그래서 표본 크기를 같이 출력한다.
+    """
+    counter, top = build_pool()
+    kept_set = {r["keyword"] for r in load_kept()}
+    n = len(kept_set)                      # LLM 출력 개수와 같은 N 으로 자른다
+    head = top[:n]
+
+    kept_lab = read_label_map(KEPT_CSV)
+    drop_lab = read_label_map(DROP_CSV)
+
+    in_kept = [k for k in head if k in kept_set]
+    in_drop = [k for k in head if k not in kept_set]
+
+    # ① 통과 층 — 전수 라벨
+    a_lab = [kept_lab[k] for k in in_kept if k in kept_lab]
+    a_y   = a_lab.count("y")
+    # ② 탈락 층 — 표본 라벨
+    b_lab = [drop_lab[k] for k in in_drop if k in drop_lab]
+    b_y   = b_lab.count("y")
+
+    if not a_lab or not b_lab:
+        raise SystemExit("라벨이 부족하다 — 먼저 두 CSV 의 label 칸을 채울 것")
+
+    a_rate = a_y / len(a_lab)
+    b_rate = b_y / len(b_lab)
+    est_y  = len(in_kept) * a_rate + len(in_drop) * b_rate
+    baseline = est_y / n
+
+    llm_lab = list(kept_lab.values())
+    llm_prec = llm_lab.count("y") / len(llm_lab)
+    lo, hi = wilson(llm_lab.count("y"), len(llm_lab))
+
+    print("=" * 66)
+    print(f"  LLM 필터 vs 점수 정렬 기준선 (같은 출력 개수 N={n})")
+    print("=" * 66)
+    print(f"  판정자 : {ANNOTATOR}")
+    print()
+    print(f"  [기준선] LLM 없이 score_priority 상위 {n}개")
+    print(f"    ① LLM 도 고른 것 {len(in_kept):>2}개 중 라벨 {len(a_lab):>2}개 → 메뉴 {a_y:>2}개 ({a_rate:.1%})")
+    print(f"    ② LLM 이 버린 것 {len(in_drop):>2}개 중 라벨 {len(b_lab):>2}개 → 메뉴 {b_y:>2}개 ({b_rate:.1%})")
+    print(f"    층화 추정 메뉴 {est_y:.1f}개 / {n}  →  정밀도 {baseline:.1%}")
+    print()
+    print(f"  [LLM 필터] {llm_lab.count('y')}/{len(llm_lab)}  →  정밀도 {llm_prec:.1%}  (95% CI {lo:.1%} ~ {hi:.1%})")
+    print()
+    gain = llm_prec - baseline
+    print(f"  차이: {gain:+.1%}p"
+          + ("   → LLM 이 기준선을 넘는다" if lo > baseline else
+             "   → 기준선이 LLM 의 신뢰구간 안에 있다 (우위 불확실)"))
+    print()
+    print(f"  주의: ②는 표본 {len(b_lab)}개에서 외삽한 값이다. 표본이 작을수록 기준선이 흔들린다.")
+
+    out = {
+        "annotator": ANNOTATOR, "n": n,
+        "baseline": {"precision": baseline, "est_menu": est_y,
+                     "stratum_kept": {"size": len(in_kept), "labeled": len(a_lab),
+                                      "menu": a_y, "rate": a_rate},
+                     "stratum_dropped": {"size": len(in_drop), "labeled": len(b_lab),
+                                         "menu": b_y, "rate": b_rate}},
+        "llm": {"precision": llm_prec, "ci95": [lo, hi]},
+        "gain_pp": gain,
+        "llm_beats_baseline": lo > baseline,
+    }
+    path = os.path.join(EVAL_DIR, "filter_baseline.json")
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(out, f, ensure_ascii=False, indent=2)
+    print(f"\n  저장: {os.path.relpath(path, BASE_DIR)}")
+
+
 def demo() -> None:
     """Wilson 구간 자체 검증 — 지표 계산이 틀리면 전부 무의미해진다."""
     lo, hi = wilson(49, 49)
@@ -289,6 +390,7 @@ def demo() -> None:
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser(description="메뉴 키워드 필터 정밀도/재현율")
-    ap.add_argument("cmd", choices=["sample", "score", "selftest"])
+    ap.add_argument("cmd", choices=["sample", "score", "baseline", "selftest"])
     a = ap.parse_args()
-    {"sample": cmd_sample, "score": cmd_score, "selftest": demo}[a.cmd]()
+    {"sample": cmd_sample, "score": cmd_score,
+     "baseline": cmd_baseline, "selftest": demo}[a.cmd]()

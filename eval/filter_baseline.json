@@ -1,0 +1,29 @@
+{
+  "annotator": "Claude (LLM 단일 판정, 사람 교차검증 없음)",
+  "n": 49,
+  "baseline": {
+    "precision": 0.061224489795918366,
+    "est_menu": 3.0,
+    "stratum_kept": {
+      "size": 6,
+      "labeled": 6,
+      "menu": 3,
+      "rate": 0.5
+    },
+    "stratum_dropped": {
+      "size": 43,
+      "labeled": 18,
+      "menu": 0,
+      "rate": 0.0
+    }
+  },
+  "llm": {
+    "precision": 0.5714285714285714,
+    "ci95": [
+      0.4327024751701555,
+      0.6997689110104295
+    ]
+  },
+  "gain_pp": 0.5102040816326531,
+  "llm_beats_baseline": true
+}
