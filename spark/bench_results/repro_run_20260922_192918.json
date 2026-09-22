@@ -1,0 +1,68 @@
+{
+  "args": {
+    "times": 3,
+    "source": [
+      "data\\8차\\keywords.jsonl",
+      "data\\2025-05-03\\keywords.jsonl"
+    ],
+    "input_records": 1365,
+    "topic": "raw-youtube",
+    "bootstrap": "localhost:9092"
+  },
+  "env": {
+    "python": "3.9.7",
+    "pyspark": "3.3.4",
+    "java_home": "C:/Program Files/Java/jdk-17",
+    "platform": "Windows-10-10.0.26200-SP0",
+    "cpu_count": 16
+  },
+  "runs": [
+    {
+      "run": 1,
+      "seconds": 13.502,
+      "videos": 1365,
+      "digest": "7789335fed5d7e95"
+    },
+    {
+      "run": 2,
+      "seconds": 13.456,
+      "videos": 1365,
+      "digest": "7789335fed5d7e95"
+    },
+    {
+      "run": 3,
+      "seconds": 13.534,
+      "videos": 1365,
+      "digest": "7789335fed5d7e95"
+    }
+  ],
+  "summary": {
+    "distinct_digests": 1,
+    "digests": [
+      "7789335fed5d7e95"
+    ],
+    "all_identical": true,
+    "pairs_vs_run1": [
+      {
+        "a": 1,
+        "b": 2,
+        "common": 1365,
+        "exact": 1365,
+        "set_equal": 1365,
+        "order_only": 0,
+        "content_diff": 0,
+        "diffs": []
+      },
+      {
+        "a": 1,
+        "b": 3,
+        "common": 1365,
+        "exact": 1365,
+        "set_equal": 1365,
+        "order_only": 0,
+        "content_diff": 0,
+        "diffs": []
+      }
+    ]
+  }
+}

@@ -57,6 +57,10 @@ data/**/*.db
 *.joblib
 *.sav
 
+# 재현성 재실행 중간 산출물 (회차별 keywords.jsonl).
+# 결론에 필요한 digest 와 비교 결과는 spark/bench_results/repro_*.json 에 남는다.
+eval/repro_runs/
+
 # 테스트 결과
 htmlcov/
 .tox/

@@ -1,0 +1,156 @@
+{
+  "files": [
+    {
+      "path": "eval\\repro_runs\\corpus_575_8cha_only.jsonl",
+      "digest": "ef6c1262bb2a3ae4",
+      "videos": 575
+    },
+    {
+      "path": "eval\\repro_runs\\corpus_1365_8cha_plus_0503.jsonl",
+      "digest": "7789335fed5d7e95",
+      "videos": 1365
+    }
+  ],
+  "pairs": [
+    {
+      "a": "eval\\repro_runs\\corpus_575_8cha_only.jsonl",
+      "b": "eval\\repro_runs\\corpus_1365_8cha_plus_0503.jsonl",
+      "ids_a": 575,
+      "ids_b": 1365,
+      "common": 575,
+      "only_a": [],
+      "only_b": [
+        "-4K3rp1XptU",
+        "-4g0pWH3RQU",
+        "-6tyS0PHAzg",
+        "-BDxejnL3fQ",
+        "-ONOQ6PM8vU"
+      ],
+      "n_only_a": 0,
+      "n_only_b": 790,
+      "exact": 107,
+      "set_equal": 182,
+      "order_only": 75,
+      "content_diff": 393,
+      "diffs": [
+        {
+          "video_id": "-2drEK9XBFk",
+          "only_in_a": [
+            "뿌린 짜파게티",
+            "양념치킨 "
+          ],
+          "only_in_b": [
+            " 24000원",
+            "짜파게티"
+          ],
+          "order_only": false
+        },
+        {
+          "video_id": "-Cja5kw1BDw",
+          "only_in_a": [
+            "dessert chocolate",
+            "케이크 cake"
+          ],
+          "only_in_b": [
+            "party!",
+            "cake dessert"
+          ],
+          "order_only": false
+        },
+        {
+          "video_id": "-DcPBLbM9vU",
+          "only_in_a": [
+            "음식",
+            "그리고"
+          ],
+          "only_in_b": [
+            "감사합니다",
+            "좋아요와 구독"
+          ],
+          "order_only": false
+        },
+        {
+          "video_id": "-Hp8vY7w9IQ",
+          "only_in_a": [
+            "함께 달콤한"
+          ],
+          "only_in_b": [
+            "함께"
+          ],
+          "order_only": false
+        },
+        {
+          "video_id": "-HsY2lpZwQ8",
+          "only_in_a": [
+            "내가 수"
+          ],
+          "only_in_b": [
+            "쇼츠 #shorts."
+          ],
+          "order_only": false
+        },
+        {
+          "video_id": "-O1nT_JVUCc",
+          "only_in_a": [
+            "rice",
+            "tea"
+          ],
+          "only_in_b": [
+            "green tea",
+            "green"
+          ],
+          "order_only": false
+        },
+        {
+          "video_id": "-PVWc4ggUiA",
+          "only_in_a": [
+            "제 위한",
+            "제"
+          ],
+          "only_in_b": [
+            "진출을",
+            "성게알"
+          ],
+          "order_only": false
+        },
+        {
+          "video_id": "-W6AB3rUCcM",
+          "only_in_a": [
+            "sausages chicken",
+            "잘 sausages"
+          ],
+          "only_in_b": [
+            "chicken",
+            "&amp;"
+          ],
+          "order_only": false
+        },
+        {
+          "video_id": "-beB64jcgj4",
+          "only_in_a": [
+            "재료도 쉽고",
+            "맛있어요 쉽고",
+            "그리고 재료도",
+            "쉽고 그리고"
+          ],
+          "only_in_b": [
+            "그리고"
+          ],
+          "order_only": false
+        },
+        {
+          "video_id": "-egQs0j6n0E",
+          "only_in_a": [
+            "갈 다시",
+            "다시 수"
+          ],
+          "only_in_b": [
+            "#shorts.",
+            "쇼츠"
+          ],
+          "order_only": false
+        }
+      ]
+    }
+  ]
+}

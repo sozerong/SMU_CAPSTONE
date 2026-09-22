@@ -3,10 +3,20 @@ from pyspark.sql.functions import col, concat_ws, array_union, regexp_replace
 from pyspark.ml.feature import Tokenizer, NGram, CountVectorizer, IDF
 import pandas as pd
 import os
+import sys
 import json
 
-# ✅ PySpark Python 경로 설정 (필요시 절대경로로 설정)
-os.environ["PYSPARK_PYTHON"] = "python"
+# Windows 기본 콘솔 인코딩이 cp949 라 아래 print 의 이모지에서 UnicodeEncodeError 가 나고,
+# 마지막 줄에서 죽으면 잡이 다 끝났는데도 종료 코드가 1 이 된다.
+# 재실행 스크립트가 종료 코드로 성패를 판정하므로 여기서 utf-8 로 고정한다.
+sys.stdout.reconfigure(encoding="utf-8")
+
+# ✅ PySpark Python 경로 설정
+# "python" 을 그대로 쓰면 Windows 에서 executor 가 PATH 에서 인터프리터를 못 찾아
+# CreateProcess error=2 로 죽는다. 지금 이 스크립트를 돌리는 인터프리터를 그대로 쓴다
+# (menu_join.py 와 같은 방식). setdefault 라 외부에서 지정한 값은 덮지 않는다.
+os.environ.setdefault("PYSPARK_PYTHON", sys.executable)
+os.environ.setdefault("PYSPARK_DRIVER_PYTHON", sys.executable)
 
 # ✅ Spark 세션 생성
 spark = SparkSession.builder \

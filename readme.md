@@ -11,6 +11,7 @@
 | 키워드 정제 | 후보 322개 → 메뉴 49개 (잔존율 15.2%) | 8차 데이터, Okt 추출 후 |
 | 정제 필터 정밀도 | **57.1%** / 재현율 77.4% | 라벨 149건, 판정자 Claude |
 | └ LLM 없는 정렬 대비 | 6.1% → **57.1%** (+51.0%p) | 같은 출력 개수(49) 대조 |
+| Spark 잡 재실행 일치 | **100%** (18회) | 3개 코퍼스 · 입력 고정 · 각 10/5/3회 |
 | Spark 산출물 재현성 | 회차 간 완전 일치 **0~10.7%** | 배치 TF-IDF 의 코퍼스 의존성 |
 | 후보 밖 생성률 — 메뉴 경로 | **2.2%** (2/92) | 저장된 답변 24건 전수 |
 | 후보 밖 생성률 — 재료 경로 | **50.0%** (10/20) | 같음 |
@@ -42,7 +43,7 @@ flowchart LR
 | [docs/architecture/spark.md](docs/architecture/spark.md) | TF-IDF 잡 내부, 조인/스큐 실험 구현 |
 | [docs/architecture/data-model.md](docs/architecture/data-model.md) | **Neo4j 그래프 스키마**, ES 매핑, 파일 단계 |
 | [docs/metrics.md](docs/metrics.md) | **SLO 와 그 목표치의 근거** — 목표를 못 세우는 항목 포함 |
-| [docs/adr](docs/adr) | 설계 결정 3건 |
+| [docs/adr](docs/adr) | 설계 결정 4건 |
 
 ## 데이터 흐름
 
@@ -230,7 +231,42 @@ python agent/eval_filter.py baseline
 
 캐시도 시드도 없다. temperature=0 인 `food_fillter.py` 조차 완전한 결정성이 보장되지는 않는다.
 
-**② LLM 을 빼고 Spark 단계만 봐도, 같은 영상의 키워드가 회차마다 다르다.**
+**② Spark 잡 자체는 같은 입력에서 결정적이다.** — 측정했다.
+
+Kafka 토픽에 **한 번만** 주입하고 `spark_keyword.py` 를 N회 재실행한다.
+매 회차 새로 수집하면 입력이 달라져 질문 자체가 성립하지 않으므로, 저장된 산출물을
+재주입해 입력을 고정한다.
+
+```bash
+python kafka/replay_to_kafka.py --source data/8차/keywords.jsonl
+python spark/verify_reproducibility.py run --times 10 --source data/8차/keywords.jsonl
+```
+
+| 주입 파일 | 문서 | 재실행 | 완전 일치 | 산출물 digest |
+|---|---|---|---|---|
+| `data/8차/keywords.jsonl` | 575 | 10회 | 575/575 (**100%**) | `ef6c1262bb2a3ae4` |
+| `data/2025-05-03/keywords.jsonl` | 1,105 | 5회 | 1105/1105 (**100%**) | `535e0178e718e8fa` |
+| 8차 + 05-03 신규 790건 | 1,365 | 3회 | 1365/1365 (**100%**) | `7789335fed5d7e95` |
+
+**18회 전부 일치했다.** 순서만 다른 건수도 0이다. `PYTHONHASHSEED` 를 설정하지 않아
+회차마다 문자열 해시 시드가 달랐는데도 갈리지 않았다.
+
+> 이 입력은 원본 영상 텍스트가 아니다. 저장소에 잡의 **입력**이 남아 있지 않아
+> (보관된 것은 산출물뿐이다) 키워드를 이어 붙여 재구성했다. 그 문서는 TF 동점이
+> 원문보다 많아, 동점 처리가 흔들린다면 원문보다 잘 드러나는 조건이다.
+
+**③ 그런데 회차가 바뀌면 같은 영상의 키워드가 달라진다. 원인은 코퍼스 의존성이다.**
+
+②로 잡이 결정적임을 확인했으므로, **같은 575개 문서를 한 글자도 바꾸지 않고**
+코퍼스만 575 → 1,365 로 키워 코퍼스 효과만 분리해 쟀다.
+
+| 575개 공통 영상 기준 | |
+|---|---|
+| 완전 일치 | 107/575 (**18.6%**) |
+| 집합 일치 | 182/575 (31.7%) — 순서만 다름 75 |
+| 내용 다름 | 393/575 (**68.3%**) |
+
+저장된 회차끼리의 비교도 같은 방향이다 (단 입력이 서로 달라 원인이 분리되지 않는다).
 
 ```bash
 python spark/verify_reproducibility.py compare \
@@ -242,13 +278,13 @@ python spark/verify_reproducibility.py compare \
 | 8차 ↔ 2025-04-30 | 122개 | 13개 (10.7%) |
 | 8차 ↔ 2025-05-03 | 315개 | **0개 (0.0%)** |
 
-**이건 Spark 잡의 버그가 아니라 배치 TF-IDF 의 성질이다.** IDF 를 배치 전체 문서에서
+**Spark 잡의 버그가 아니라 배치 TF-IDF 의 성질이다.** IDF 를 배치 전체 문서에서
 계산하므로, 같은 영상이라도 그 주에 무엇이 같이 수집됐느냐에 따라 상위 8개가 달라진다.
-수집 규모가 350 → 575 → 1,105 로 바뀌면 가중치가 통째로 바뀐다.
 
-→ **"산출물 일치"는 이 파이프라인에서 적절한 재현성 지표가 아니다.**
-적절한 것은 "같은 입력으로 돌렸을 때 같은 결과가 나오는가"(잡의 결정성)이고,
-그건 `verify_reproducibility.py run --times N` 으로 재는데 Kafka 가 필요해 아직 못 돌렸다.
+→ **"파이프라인 N회 실행 산출물 일치"는 여전히 주장할 수 없다.** LLM 단계가 그대로다.
+바뀐 것은 원인의 소재다 — **Spark 잡은 용의선상에서 빠졌고**, 남는 것은
+배치 TF-IDF 의 코퍼스 의존성과 LLM 둘뿐이다.
+근거: [ADR-0010](docs/adr/0010-reproducibility-scope.md)
 
 ## 설계 결정
 
@@ -257,6 +293,7 @@ python spark/verify_reproducibility.py compare \
 - [ADR-0006](docs/adr/0006-llm-hallucination-candidate-restriction.md) LLM 환각 대응 — 후보 선행 제한 (부분 성공)
 - [ADR-0007](docs/adr/0007-idempotent-reload.md) 저장소별 재적재 방식
 - [ADR-0008](docs/adr/0008-skew-not-mitigated.md) 스큐 대응 미적용
+- [ADR-0010](docs/adr/0010-reproducibility-scope.md) 재현성 주장의 범위 — 단계별로 분리
 
 ## 별도 실험: 키워드 × 카페 메뉴 조인과 스큐 대응
 
@@ -334,6 +371,10 @@ python neo4j/cleanup.py delete-round 2025-05-03 --dry-run
 # 재현성 (저장된 산출물끼리 비교 — 재실행 없음)
 python spark/verify_reproducibility.py compare data/8차/keywords.jsonl data/2025-05-03/keywords.jsonl
 
+# 재현성 (같은 입력 N회 재실행 — Kafka 필요, 기동 명령은 ADR-0010)
+python kafka/replay_to_kafka.py --source data/8차/keywords.jsonl
+python spark/verify_reproducibility.py run --times 10 --source data/8차/keywords.jsonl
+
 # 조인 파이프라인 (합성 메뉴 데이터 생성 후)
 python spark/make_cafe_menu.py --cafes 120000
 python spark/menu_join.py --mode plain --repeat 3
@@ -352,5 +393,11 @@ python spark/menu_join.py --mode plain --repeat 3
 - **정제 정밀도 — 라벨 판정자가 사람이 아니다.** 149건 라벨링과 계산은 끝났고
   (정밀도 57.1%, 아래 표), 라벨을 **Claude 가 단독으로** 달았다. 교차 검증이 없다.
   사람이 다시 라벨링하면 `eval_filter.py` 의 `ANNOTATOR` 를 바꾸고 `score` 를 재실행할 것.
-- **재현성 — 같은 입력 재실행 미검증.** 아래 "재현성" 절 참조.
-  `verify_reproducibility.py run` 은 Kafka 가 떠 있어야 해서 돌리지 못했다.
+- ~~재현성 — 같은 입력 재실행 미검증~~ → 측정했다. 3개 코퍼스 **18회 전부 일치**
+  (`kafka/replay_to_kafka.py` + `verify_reproducibility.py run`).
+  **단 입력 코퍼스가 재구성물이다** — 저장소에 잡의 입력(영상 제목·설명문)이 남아 있지
+  않아 산출물의 키워드를 이어 붙여 만들었다. 원문으로 같은 결과라는 보장은 없다.
+  단일 노드(`local[*]`) 기준이라 다중 executor 클러스터도 확인하지 않았다.
+- **재현성 — LLM 단계는 여전히 미측정.** temperature > 0 인 3단계는 재실행 비교를
+  하려면 OpenAI 키로 같은 입력에 N회 호출해야 한다. 구조상 일치가 성립하지 않을 것으로
+  보지만 실측하지 않았다.

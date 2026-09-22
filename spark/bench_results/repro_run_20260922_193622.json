@@ -1,0 +1,99 @@
+{
+  "args": {
+    "times": 5,
+    "source": [
+      "data\\2025-05-03\\keywords.jsonl"
+    ],
+    "input_records": 1105,
+    "topic": "raw-youtube",
+    "bootstrap": "localhost:9092"
+  },
+  "env": {
+    "python": "3.9.7",
+    "pyspark": "3.3.4",
+    "java_home": "C:/Program Files/Java/jdk-17",
+    "platform": "Windows-10-10.0.26200-SP0",
+    "cpu_count": 16
+  },
+  "runs": [
+    {
+      "run": 1,
+      "seconds": 15.176,
+      "videos": 1105,
+      "digest": "535e0178e718e8fa"
+    },
+    {
+      "run": 2,
+      "seconds": 14.894,
+      "videos": 1105,
+      "digest": "535e0178e718e8fa"
+    },
+    {
+      "run": 3,
+      "seconds": 14.612,
+      "videos": 1105,
+      "digest": "535e0178e718e8fa"
+    },
+    {
+      "run": 4,
+      "seconds": 14.79,
+      "videos": 1105,
+      "digest": "535e0178e718e8fa"
+    },
+    {
+      "run": 5,
+      "seconds": 14.661,
+      "videos": 1105,
+      "digest": "535e0178e718e8fa"
+    }
+  ],
+  "summary": {
+    "distinct_digests": 1,
+    "digests": [
+      "535e0178e718e8fa"
+    ],
+    "all_identical": true,
+    "pairs_vs_run1": [
+      {
+        "a": 1,
+        "b": 2,
+        "common": 1105,
+        "exact": 1105,
+        "set_equal": 1105,
+        "order_only": 0,
+        "content_diff": 0,
+        "diffs": []
+      },
+      {
+        "a": 1,
+        "b": 3,
+        "common": 1105,
+        "exact": 1105,
+        "set_equal": 1105,
+        "order_only": 0,
+        "content_diff": 0,
+        "diffs": []
+      },
+      {
+        "a": 1,
+        "b": 4,
+        "common": 1105,
+        "exact": 1105,
+        "set_equal": 1105,
+        "order_only": 0,
+        "content_diff": 0,
+        "diffs": []
+      },
+      {
+        "a": 1,
+        "b": 5,
+        "common": 1105,
+        "exact": 1105,
+        "set_equal": 1105,
+        "order_only": 0,
+        "content_diff": 0,
+        "diffs": []
+      }
+    ]
+  }
+}

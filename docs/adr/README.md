@@ -8,8 +8,10 @@
 | [0006](0006-llm-hallucination-candidate-restriction.md) | LLM 환각 대응 — 후보 선행 제한 | Accepted (부분 성공 — 재료 경로 50% 미차단) |
 | [0007](0007-idempotent-reload.md) | 저장소별 재적재 방식 | Accepted (Neo4j 정리 수단 미구현) |
 | [0008](0008-skew-not-mitigated.md) | 스큐 대응 미적용 | Accepted |
+| [0010](0010-reproducibility-scope.md) | 재현성 주장의 범위 — 단계별로 분리 | Accepted |
 
 번호 0001~0005, 0009 는 Illo-on 저장소의 `docs/adr` 에 있습니다.
+그래서 0008 다음 번호가 0010 입니다.
 
 기록하지 않은 것: 사후에 정한 SLO, 비용 목표.
 프로젝트 진행 당시 제약으로 두지 않았던 항목은 지어내지 않고 비워 두었습니다.
