@@ -27,10 +27,14 @@ def create_keyword_graph(tx, item):
     print(f"⏳ 처리 중: {name}")
 
     # ✅ Keyword 노드
+    # coalesce 를 쓰는 이유: 이 키워드가 이전 회차에 RELATED 대상으로만 먼저 생겼다면
+    # count 속성이 없다(NULL). NULL + 숫자 = NULL 이라 한 번 그렇게 되면 영구히 NULL 이고,
+    # count 로 정렬하는 후보 쿼리에서 이 키워드가 계속 뒤로 밀린다.
     tx.run("""
         MERGE (k:Keyword {name: $name})
         ON CREATE SET k.count = $count, k.importance = $importance
-        ON MATCH SET k.count = k.count + $count
+        ON MATCH SET k.count = coalesce(k.count, 0) + $count,
+                     k.importance = coalesce($importance, k.importance)
     """, name=name, count=count, importance=importance)
 
     # ✅ 날짜 노드
@@ -103,12 +107,21 @@ def create_keyword_graph(tx, item):
     # ✅ Related 관계
     for rel_kw in item.get("related", []):
         if rel_kw.strip() and rel_kw != name:
+            # RELATED 대상도 회차(Date)에 묶는다.
+            # 안 묶으면 RECORDED_ON 이 없어 회차 단위 정리(neo4j/cleanup.py)로
+            # 영원히 지울 수 없는 노드가 쌓인다 (실측: 337개 중 251개가 이 상태였다).
+            # count=0 으로 만들어 두는 것도 같은 이유다 — 나중에 진짜 키워드로
+            # 들어올 때 NULL 산술에 걸리지 않게.
             tx.run("""
                 MERGE (b:Keyword {name: $b})
+                ON CREATE SET b.count = 0
                 WITH b
                 MATCH (a:Keyword {name: $a})
                 MERGE (a)-[:RELATED {score: 0.9}]->(b)
-            """, a=name, b=rel_kw)
+                WITH b
+                MATCH (d:Date {value: $today})
+                MERGE (b)-[:RECORDED_ON]->(d)
+            """, a=name, b=rel_kw, today=today_str)
 
 # ✅ 실행
 with driver.session() as session:
