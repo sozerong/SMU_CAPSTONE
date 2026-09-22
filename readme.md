@@ -153,16 +153,27 @@ python GragpRAG/eval_candidates.py
 > 누적되므로 같은 파일을 두 번 적재하면 `freq` 가 정확히 2배가 된다 (딸기 209 → 418 실측).
 > 스크립트가 `Date` 노드 수로 회차를 세서 1회가 아니면 경고한다.
 
-`tests/test_candidates.py` 8개가 실제 Neo4j 픽스처로 검증한다.
+`tests/test_candidates.py` 8개 중 **7개**가 실제 Neo4j 픽스처로 검증한다
+(나머지 `test_question_routing` 은 질문 파싱만 보므로 DB 가 필요 없다).
 그중 **고아 재료 제외**(집합) 테스트가 이 회귀를 잡는다. 순위 테스트는 깨진 쿼리에서도 통과한다.
+
+깨진 쿼리(`OPTIONAL MATCH (e:Example)-[:CONTAINS_INGREDIENT]->(i)`)로 되돌려 실측:
+**2 failed, 6 passed** — 실패하는 것은 고아 재료 제외와 쿼리가 쓰는 관계의 DB 실재 확인
+두 개다. 순위 테스트는 전부 동점이라 저장 순서가 우연히 기대와 맞아 통과한다.
 
 ```bash
 docker start my-neo4j          # 또는 bolt://localhost:7687 에 Neo4j 기동
 python -m pytest tests/ -q     # 8 passed
 ```
 
-**Neo4j 가 떠 있지 않으면 8개 전부 skip 된다.** 픽스처가 실제 그래프를 만들어 쓰기 때문이다.
+**Neo4j 가 떠 있지 않으면 7개가 skip 되고 1개(경로 분기)는 통과한다.**
+픽스처가 실제 그래프를 만들어 쓰기 때문이다.
 skip 메시지에 예외 타입이 찍히므로 접속 실패인지 다른 원인인지 구분할 수 있다.
+
+> **저장소 루트의 `neo4j/` 디렉터리가 공식 드라이버를 가린다.** `python -m pytest` 는
+> 현재 디렉터리를 `sys.path[0]` 에 넣고, `neo4j/` 는 `__init__.py` 가 없어 네임스페이스
+> 패키지로 잡히므로 `import neo4j` 가 이 디렉터리를 집는다. 루트의 `conftest.py` 가
+> 루트를 `sys.path` 에서 빼서 막는다. 드라이버 자체는 `pip install neo4j` 가 필요하다.
 
 상세: [ADR-0006](docs/adr/0006-llm-hallucination-candidate-restriction.md) ·
 [그래프 스키마](docs/architecture/data-model.md)
