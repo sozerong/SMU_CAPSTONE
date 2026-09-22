@@ -65,37 +65,49 @@ graph LR
 | `INCLUDES` | Combo → Ingredient | ✅ |
 | `HAS_EXAMPLE` | Keyword → Example | ✅ |
 | `RELATED {score: 0.9}` | Keyword → Keyword | ✅ (점수는 상수 0.9) |
-| **`CONTAINS_INGREDIENT`** | Example → Ingredient | ❌ **조회만 하고 생성하는 코드가 없다** |
+| ~~`CONTAINS_INGREDIENT`~~ | Example → Ingredient | ❌ 생성 코드 없음 — **쿼리에서 제거됨** |
 
-### ⚠️ `CONTAINS_INGREDIENT` — 존재하지 않는 관계를 조회한다
+### `CONTAINS_INGREDIENT` — 없는 관계를 조회하던 버그 (수정됨)
 
-`GragpRAG/graphrag_aq.py` 의 재료 경로 Cypher:
+재료 경로 Cypher 가 이랬다.
 
 ```cypher
 MATCH (i:Ingredient)
-OPTIONAL MATCH (e:Example)-[:CONTAINS_INGREDIENT]->(i)
+OPTIONAL MATCH (e:Example)-[:CONTAINS_INGREDIENT]->(i)   -- 이 관계는 만들어지지 않는다
 WITH i, count(e) AS usage_count
-RETURN i.name AS keyword
-ORDER BY usage_count DESC
-LIMIT 10
+RETURN i.name AS keyword ORDER BY usage_count DESC LIMIT 10
 ```
 
-`CONTAINS_INGREDIENT` 를 **만드는 코드가 저장소 어디에도 없다.**
-`neo4j_schema.py` 가 만드는 관계는 위 표의 ✅ 8개뿐이다.
+`CONTAINS_INGREDIENT` 를 만드는 코드가 저장소 어디에도 없다.
+`OPTIONAL MATCH` 라 에러는 나지 않고, **모든 재료의 `usage_count` 가 0** 이 되어
+전부 동점이 된다. `ORDER BY` 가 무의미해져 **임의의 재료 10개**가 나갔다.
 
-`OPTIONAL MATCH` 라 에러는 나지 않는다. 대신 **모든 `Ingredient` 의 `usage_count` 가 0** 이 되고,
-`ORDER BY usage_count DESC` 는 전부 동점이라 **정렬이 사실상 무작위**가 된다.
-
-즉 이 쿼리는 "사용 빈도 상위 10개"가 아니라 **"임의의 재료 10개"** 를 돌려준다.
-
+"최근 유행하는 재료"를 물었는데 후보가 무작위니 모델이 밖에서 끌어온다.
 이것이 [ADR-0006](../adr/0006-llm-hallucination-candidate-restriction.md) 에서 측정한
-**재료 경로 후보 밖 생성률 50%** 의 근본 원인이다.
-"최근 유행하는 재료"를 물었는데 후보가 무작위 10개라 질문과 아무 관계가 없고,
-모델이 후보 밖에서 끌어온다. 프롬프트 제약 문구로는 막을 수 없다.
+**재료 경로 후보 밖 생성률 50%** 의 근본 원인이다. 프롬프트로는 막을 수 없는 종류였다.
 
-**고치려면**: `Example` 텍스트에서 재료를 추출해 `CONTAINS_INGREDIENT` 를 실제로 만들거나,
-`Combo -[:INCLUDES]-> Ingredient` 의 역방향 카운트(`INCLUDES` 는 실재한다)로 바꾸거나,
-`RECORDED_ON` 날짜로 최근 구간을 잘라 증가율 상위를 뽑는다. 마지막이 "유행"에 가장 가깝다.
+**지금 쿼리** (`GragpRAG/candidates.py`) — 실재하는 관계만 쓴다.
+
+```cypher
+MATCH (i:Ingredient)<-[:INCLUDES]-(:Combo)<-[:IS_COMBO_WITH]-(k:Keyword)
+OPTIONAL MATCH (k)-[:RECORDED_ON]->(d:Date)
+WITH i, max(d.value) AS latest, sum(k.count) AS freq
+RETURN i.name AS keyword ORDER BY latest DESC, freq DESC LIMIT $limit
+```
+
+실제 Neo4j(2025-05-03 데이터, Ingredient 98개)로 확인한 전/후:
+
+| | 상위 5개 |
+|---|---|
+| 전 | 밀가루, 버터, 크림, 빵, 그릭 요거트 (`usage_count` 전부 0) |
+| 후 | **딸기(209), 크림(202), 초콜릿(179), 소금(124), 생크림(112)** |
+
+`tests/test_candidates.py` 8개가 실제 Neo4j 픽스처로 검증한다.
+그중 **고아 재료 제외** 테스트가 이 회귀를 잡는다 — 깨진 쿼리로 되돌려 확인했다.
+
+> 순위 검증만으로는 부족했다. 깨진 쿼리에서도 순위 테스트가 통과한다
+> (전부 동점이라 저장 순서가 우연히 기대와 맞는다).
+> 조용히 임의가 되는 버그는 순위가 아니라 **집합**으로 잡아야 한다.
 
 ### 메뉴 경로 Cypher (대조)
 
@@ -162,6 +174,17 @@ RETURN k.name, k.count ORDER BY count DESC LIMIT 10
 | 8차 | 575 | 852 → 후보 322 | 49 | 15.2% |
 | 2025-04-30 | 350 | — | 53 | — |
 | 2025-05-03 | 1,105 | — | 86 | — |
+
+**회차마다 산출 필드가 다르다.** Neo4j 에 적재해 보면 드러난다.
+
+| 회차 | `tag` | `combo` | `related` | `importance` | 적재 결과 |
+|---|---|---|---|---|---|
+| 8차 (48행) | ❌ | ❌ | ❌ | ❌ | `Tag`·`Combo`·`Ingredient` 노드가 **하나도 안 생긴다** |
+| 2025-05-03 (86행) | ✅ | ✅ | ✅ | ✅ | 전체 그래프 생성 (Ingredient 98, Combo 108, Tag 40) |
+
+8차 데이터로 적재하면 **재료 경로가 후보를 하나도 못 찾는다.**
+`keyword_info_collector.py` 의 산출 스키마가 회차 사이에 바뀐 것으로 보인다.
+후보가 비면 LLM 이 제약 없이 생성하므로 폴백을 넣어 뒀다.
 
 "후보 322"는 Okt 명사+2~3gram 추출과 금칙어 필터를 거친 뒤의 `phrase_counter` 크기다.
 `food_fillter.py` 는 여기서 상위 500 을 자르는데 풀이 322 라 전부 통과한다.
