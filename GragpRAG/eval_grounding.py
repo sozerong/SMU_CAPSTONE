@@ -24,7 +24,7 @@ import argparse
 import glob
 import json
 import os
-import re
+
 import sys
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -33,12 +33,10 @@ sys.stdout.reconfigure(encoding="utf-8")
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PATTERN  = os.path.join(BASE_DIR, "data", "**", "*graphrag*.jsonl")
 
-_WS = re.compile(r"\s+")
-
-
-def norm(s: str) -> str:
-    """공백 제거 + 소문자화. '모찌 롤' 과 '모찌롤' 을 같게 본다."""
-    return _WS.sub("", str(s)).lower()
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+# 판정 기준의 단일 출처. graphrag_aq.py 의 런타임 격리도 같은 모듈을 쓴다 —
+# 생성 시점과 측정 시점의 기준이 갈라지면 둘 다 못 믿게 된다.
+from grounding import is_grounded, normalize as norm   # noqa: E402
 
 
 def parse_answer(answer: Any) -> Tuple[Optional[List[str]], str]:
@@ -71,11 +69,8 @@ def parse_answer(answer: Any) -> Tuple[Optional[List[str]], str]:
 
 def classify(name: str, candidates: List[str]) -> Tuple[bool, bool]:
     """(strict 기준 후보 안, lenient 기준 후보 안)"""
-    n = norm(name)
-    cands = [norm(c) for c in candidates]
-    strict  = n in cands
-    lenient = strict or any(c and c in n for c in cands)
-    return strict, lenient
+    return (is_grounded(name, candidates, strict=True),
+            is_grounded(name, candidates, strict=False))
 
 
 def main() -> None:
