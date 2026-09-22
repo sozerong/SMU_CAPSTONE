@@ -33,6 +33,14 @@ flowchart LR
   V -->|실패| X[print 후 건너뜀<br/>※ 격리 저장 미구현]
 ```
 
+## 더 자세히
+
+| 문서 | 내용 |
+|---|---|
+| [docs/architecture/spark.md](docs/architecture/spark.md) | TF-IDF 잡 내부, 조인/스큐 실험 구현 |
+| [docs/architecture/data-model.md](docs/architecture/data-model.md) | **Neo4j 그래프 스키마**, ES 매핑, 파일 단계 |
+| [docs/adr](docs/adr) | 설계 결정 3건 |
+
 ## 데이터 흐름
 
 | 단계 | 처리 | 출력 | 쓰기 방식 |
@@ -85,12 +93,26 @@ python GragpRAG/eval_grounding.py
 **같은 제약을 걸었는데 경로에 따라 23배 차이가 난다.** 재료 경로에서 나온 후보 밖 값은
 아보카도·코코넛·매실·망고·요거트·고구마, 그리고 `쿠알라룸푸르`(도시명)였다.
 
-원인은 후보를 만드는 Cypher가 다르기 때문으로 보인다. 재료 경로는
-`MATCH (i:Ingredient)` 로 **사용 빈도 상위 10개**만 뽑아 넘기는데, 그 10개가
-"크림·초코·딸기·치즈·우유·커피·녹차" 같은 일반 재료라 "유행하는 재료"라는 질문에
-답이 되지 못한다. 후보가 질문에 못 미치면 모델이 밖에서 끌어온다.
+**원인은 프롬프트가 아니라 Cypher 버그였다.** 재료 경로는 이렇게 후보를 뽑는다.
 
-→ 남은 과제에 적었다. 후보 선정 자체를 질문 의도에 맞추지 않으면 프롬프트로는 막히지 않는다.
+```cypher
+MATCH (i:Ingredient)
+OPTIONAL MATCH (e:Example)-[:CONTAINS_INGREDIENT]->(i)
+WITH i, count(e) AS usage_count
+RETURN i.name ORDER BY usage_count DESC LIMIT 10
+```
+
+겉보기엔 "사용 빈도 상위 10개"인데, **`CONTAINS_INGREDIENT` 를 만드는 코드가
+저장소 어디에도 없다.** `OPTIONAL MATCH` 라 에러 없이 모든 재료의 `usage_count` 가 0 이 되고,
+전부 동점이라 **정렬이 무작위**가 된다. 즉 후보는 임의의 재료 10개다.
+
+메뉴 경로는 `HAS_TAG`·`HAS_SEASON`·`HAS_CATEGORY` — **실재하는 관계**를 타고
+`k.count` 로 정렬한다. 같은 제약 문구인데 23배 갈린 것은 프롬프트 차이가 아니라
+**후보 쿼리가 실제로 동작하느냐**의 차이였다.
+
+측정하지 않았으면 프롬프트를 고치고 있었을 것이다.
+상세: [ADR-0006](docs/adr/0006-llm-hallucination-candidate-restriction.md) ·
+[그래프 스키마](docs/architecture/data-model.md)
 
 ## 재현성 — 어디까지 보장되는가
 
