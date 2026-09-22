@@ -13,6 +13,9 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 # 후보 안/밖 판정의 단일 출처. eval_grounding.py 도 같은 모듈을 쓴다 —
 # 생성 시점과 측정 시점의 기준이 갈라지면 둘 다 못 믿게 된다.
 from grounding import validate_answer          # noqa: E402
+# 후보 탐색 Cypher. graphrag_aq 는 import 만 해도 Neo4j·OpenAI 가 붙어서 테스트가 안 된다.
+# 후보 선정이 이 파이프라인에서 가장 틀리기 쉬운 자리라 검증 가능한 모듈로 뺐다.
+from candidates import get_keywords_by_question   # noqa: E402
 
 DEAD_LETTER_PATH = "data/graphrag_dead_letter.jsonl"
 
@@ -35,70 +38,6 @@ questions = [
     "비주얼이 예쁜 메뉴",
     "계절 한정 디저트"
 ]
-
-# ✅ Cypher 기반 키워드 추출
-def get_keywords_by_question(tx, question):
-    tags, season, category = [], None, None
-    use_ingredient = "재료" in question
-
-    if "달콤" in question:
-        tags.append("단맛")
-    if "비주얼" in question or "예쁜" in question:
-        tags.append("비주얼")
-    if "SNS" in question or "핫한" in question:
-        tags.append("트렌디")
-    if "계절" in question:
-        season = "봄"
-    if "신메뉴" in question or "카페" in question:
-        category = "디저트"
-
-    if use_ingredient:
-        cypher = """
-            MATCH (i:Ingredient)
-            OPTIONAL MATCH (e:Example)-[:CONTAINS_INGREDIENT]->(i)
-            WITH i, count(e) AS usage_count
-            RETURN i.name AS keyword
-            ORDER BY usage_count DESC
-            LIMIT 10
-        """
-        return [record["keyword"] for record in tx.run(cypher)]
-
-    cypher = "WITH 1 AS _\nMATCH (k:Keyword)\n"
-    where_clauses = []
-    params = {}
-
-    if tags:
-        cypher += "MATCH (k)-[:HAS_TAG]->(t:Tag)\n"
-        where_clauses.append("t.name IN $tags")
-        params["tags"] = tags
-
-    if season:
-        cypher += "MATCH (k)-[:HAS_SEASON]->(s:Season)\n"
-        where_clauses.append("s.value = $season")
-        params["season"] = season
-
-    if category:
-        cypher += "MATCH (k)-[:HAS_CATEGORY]->(c:Category)\n"
-        where_clauses.append("c.value = $category")
-        params["category"] = category
-
-    if where_clauses:
-        cypher += "WHERE " + " AND ".join(where_clauses) + "\n"
-
-    cypher += "RETURN k.name AS keyword, k.count AS count ORDER BY count DESC LIMIT 10"
-
-    keywords = [record["keyword"] for record in tx.run(cypher, **params)]
-
-    if not keywords:
-        fallback = tx.run("""
-            MATCH (k:Keyword)
-            RETURN k.name AS keyword
-            ORDER BY k.count DESC
-            LIMIT 10
-        """)
-        keywords = [record["keyword"] for record in fallback]
-
-    return keywords
 
 # ✅ 질문별 LLM 응답 생성
 results = []

@@ -1,6 +1,6 @@
 # ADR-0006. LLM 환각 대응 — 프롬프트 튜닝이 아닌 후보 선행 제한
 
-- 상태: Accepted (부분 성공 — 측정으로 한계 확인, 후속 ADR 로 이어짐)
+- 상태: Accepted (원인 규명 후 수정 완료 — 아래 "고친 것" 참조)
 - 날짜: 프로젝트 진행 중 결정 / 2026-09 측정
 - 프로젝트: VCC
 
@@ -92,11 +92,44 @@ RETURN i.name AS keyword ORDER BY usage_count DESC LIMIT 10
 판정은 **lenient**(부분 문자열 포함) 기준이다. 이 프로젝트는 후보를 조합해 새 이름을
 만드는 것이 의도된 동작이라 strict 를 쓰면 정상 결과가 전부 격리된다(실측 70.5%).
 
+## 고친 것 — 후보 쿼리 교체
+
+실재하는 관계만 쓰도록 바꿨다. 재료는 `Combo` 를 통해서만 `Keyword` 와 이어진다.
+
+```cypher
+MATCH (i:Ingredient)<-[:INCLUDES]-(:Combo)<-[:IS_COMBO_WITH]-(k:Keyword)
+OPTIONAL MATCH (k)-[:RECORDED_ON]->(d:Date)
+WITH i, max(d.value) AS latest, sum(k.count) AS freq
+RETURN i.name AS keyword ORDER BY latest DESC, freq DESC LIMIT $limit
+```
+
+"최근 유행하는" 이라는 질문에 맞춰 **최근 기록일이 1순위, 언급 빈도 합이 2순위**다.
+누적 `count` 만으로 정렬하면 "많이 나온 것"이지 "뜨는 것"이 아니다.
+
+실제 Neo4j(2025-05-03 데이터, Ingredient 98개)로 확인한 전/후:
+
+| | 상위 5개 |
+|---|---|
+| 전 | 밀가루, 버터, 크림, 빵, 그릭 요거트 — `usage_count` 전부 **0** |
+| 후 | **딸기(209), 크림(202), 초콜릿(179), 소금(124), 생크림(112)** |
+
+후보가 비면 LLM 이 제약 없이 생성하므로 폴백도 넣었다 (Combo 미적재 회차 대비).
+
+쿼리를 `GragpRAG/candidates.py` 로 분리했다. `graphrag_aq.py` 는 import 만 해도
+Neo4j·OpenAI 가 붙어 테스트할 수 없었다. 후보 선정은 이 파이프라인에서 가장 틀리기
+쉬운 자리라 검증 가능한 자리에 둬야 한다.
+
+`tests/test_candidates.py` 8개가 실제 Neo4j 픽스처로 검증한다.
+그중 **고아 재료 제외** 테스트가 이 회귀를 실제로 잡는다 —
+깨진 쿼리로 되돌려 2개 실패하는 것을 확인했다.
+
+> 순위 검증만으로는 부족하다. 깨진 쿼리에서도 순위 테스트가 통과했다
+> (전부 동점이라 저장 순서가 우연히 기대와 맞았다).
+> **"조용히 임의가 되는" 버그는 순위가 아니라 집합으로 잡아야 한다.**
+
 ## 남은 일
 
-1. `CONTAINS_INGREDIENT` 를 실제로 만들거나, 실재하는 `INCLUDES` 의 역방향 카운트로 바꾼다.
-2. 더 나은 방향: "유행"을 물었으니 `RECORDED_ON` 날짜로 최근 구간을 잘라
-   **빈도 증가율** 상위를 뽑는다. 누적 `count` 정렬로는 "많이 나온 것"이지 "뜨는 것"이 아니다.
-3. 고친 뒤 `GragpRAG/eval_grounding.py` 로 재측정해 후속 ADR 로 남긴다.
+`RECORDED_ON` 이 현재 1개 날짜뿐이라 최근일 정렬이 실질적으로 작동하지 않는다.
+회차가 쌓이면 의미가 생긴다. 회차가 여럿 쌓인 뒤 재측정해 후속 ADR 로 남긴다.
 
 그래프 스키마 전체는 [docs/architecture/data-model.md](../architecture/data-model.md) 참조.
