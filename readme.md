@@ -29,8 +29,8 @@ flowchart LR
   N --> C[Cypher 후보 탐색<br/>재료 경로 / 메뉴 경로 분기]
   C --> L[LLM 생성<br/>gpt-4 · temp 0.3<br/>후보 외 생성 금지]
   L --> V{JSON 파싱}
-  V -->|성공| E[(Elasticsearch<br/>서빙 검색)]
-  V -->|실패| X[print 후 건너뜀<br/>※ 격리 저장 미구현]
+  V -->|통과| E[(Elasticsearch<br/>서빙 검색)]
+  V -->|파싱 실패 · 후보 밖| X[dead letter 격리<br/>사유별 건수 집계]
 ```
 
 ## 더 자세히
@@ -52,6 +52,7 @@ flowchart LR
 | 그래프 적재 | Keyword–Tag–Season–Category–Combo | Neo4j | **`MERGE` (upsert, 삭제 없음)** |
 | 후보 탐색 | Cypher — "재료" 포함 여부로 분기 | 후보 10개 | — |
 | 생성 | 후보만 주입 + 후보 외 생성 금지 | 조합 JSON | gpt-4, temp 0.3 |
+| 검증 | JSON 파싱 + **후보 밖 여부** 확인 | 통과분 / dead letter | `grounding.validate_answer` |
 | 색인 | 인덱스 삭제 후 재생성, 고정 id(`q_N`) | Elasticsearch | **전체 재적재** |
 
 LLM은 단계마다 다르다. 재현성을 따질 때 이 표가 근거가 된다.
@@ -238,8 +239,8 @@ python spark/menu_join.py --mode plain --repeat 3
 
 - **재료 경로 후보 밖 생성률 50%.** 후보 선정 Cypher를 질문 의도에 맞게 고쳐야 한다.
   프롬프트 문구로는 막히지 않는 것이 측정으로 확인됐다.
-- **파싱 실패 격리 미구현.** 현재는 `print` 후 건너뛴다. 실패 건수 집계도 없어서
-  "스키마 실패율"을 낼 수 없다. dead letter 저장과 카운터가 필요하다.
+- **dead letter 재처리 미구현.** 격리·집계는 구현했지만(`data/graphrag_dead_letter.jsonl`)
+  자동 재시도는 없다. 현재는 다음 회차 재생성에 의존한다.
 - **Neo4j 재적재가 `MERGE` 뿐이라 이전 회차 노드가 남는다.** 범위 삭제 또는
   회차 태깅 후 정리가 필요하다. (Elasticsearch 는 인덱스 전체 재생성이라 문제없다)
 - **정제 결과(49개) 정밀도 미측정.** 표본 추출까지 끝냈고 라벨링이 남았다

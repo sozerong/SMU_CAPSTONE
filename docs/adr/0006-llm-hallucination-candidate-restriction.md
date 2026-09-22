@@ -78,6 +78,20 @@ RETURN i.name AS keyword ORDER BY usage_count DESC LIMIT 10
 
 **측정이 없었으면 프롬프트를 고치고 있었을 것이다.** 실제 원인은 Cypher 였다.
 
+## 이번에 넣은 것 — 런타임 격리
+
+측정만으로는 다음 회차에 같은 일이 또 난다. 생성 직후에 잡도록 검증을 넣었다.
+
+- `GragpRAG/grounding.py` — 후보 안/밖 판정의 **단일 출처**.
+  `graphrag_aq.py`(런타임 격리)와 `eval_grounding.py`(사후 측정)가 같은 모듈을 쓴다.
+  둘이 각자 판정을 들고 있으면 기준이 갈라져 둘 다 못 믿게 된다.
+- `graphrag_aq.py` — 파싱 실패뿐 아니라 **후보 밖 응답도** `data/graphrag_dead_letter.jsonl`
+  로 격리하고 사유별 건수를 출력한다. 예전에는 `print` 후 건너뛰어서
+  "스키마 실패율"조차 낼 수 없었다.
+
+판정은 **lenient**(부분 문자열 포함) 기준이다. 이 프로젝트는 후보를 조합해 새 이름을
+만드는 것이 의도된 동작이라 strict 를 쓰면 정상 결과가 전부 격리된다(실측 70.5%).
+
 ## 남은 일
 
 1. `CONTAINS_INGREDIENT` 를 실제로 만들거나, 실재하는 `INCLUDES` 의 역방향 카운트로 바꾼다.
