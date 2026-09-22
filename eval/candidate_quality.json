@@ -1,0 +1,78 @@
+{
+  "ingredients_total": 98,
+  "orphans": 0,
+  "rounds_loaded": 1,
+  "repeats": 10,
+  "contains_ingredient_exists": false,
+  "before": {
+    "query": "before (CONTAINS_INGREDIENT)",
+    "top": [
+      "밀가루",
+      "버터",
+      "크림",
+      "빵",
+      "그릭 요거트",
+      "과일",
+      "견과류",
+      "딸기",
+      "생크림",
+      "소금"
+    ],
+    "scores": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "distinct_sets": 1,
+    "distinct_orders": 1,
+    "all_scores_zero": true,
+    "distinct_scores": 1,
+    "orphans_in_top": []
+  },
+  "after": {
+    "query": "after (INCLUDES/IS_COMBO_WITH)",
+    "top": [
+      "딸기",
+      "크림",
+      "초콜릿",
+      "생크림",
+      "소금",
+      "케이크",
+      "우유",
+      "빵",
+      "쿠키",
+      "바닐라"
+    ],
+    "scores": [
+      209,
+      208,
+      183,
+      130,
+      124,
+      123,
+      94,
+      90,
+      86,
+      84
+    ],
+    "distinct_sets": 1,
+    "distinct_orders": 1,
+    "all_scores_zero": false,
+    "distinct_scores": 10,
+    "orphans_in_top": []
+  },
+  "dropped_from_candidates": [
+    "견과류",
+    "과일",
+    "그릭 요거트",
+    "밀가루",
+    "버터"
+  ]
+}

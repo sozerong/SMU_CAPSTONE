@@ -107,8 +107,23 @@ RETURN i.name ORDER BY usage_count DESC LIMIT 10
 ```
 
 겉보기엔 "사용 빈도 상위 10개"인데, **`CONTAINS_INGREDIENT` 를 만드는 코드가
-저장소 어디에도 없다.** `OPTIONAL MATCH` 라 에러 없이 모든 재료의 `usage_count` 가 0 이 되고,
-전부 동점이라 **정렬이 무작위**가 된다. 즉 후보는 임의의 재료 10개다.
+저장소 어디에도 없다.** `db.relationshipTypes()` 로 확인해도 그 관계는 DB 에 없다.
+`OPTIONAL MATCH` 라 에러 없이 모든 재료의 `usage_count` 가 0 이 되고, 전부 동점이 된다.
+
+동점 정렬이 어떻게 동작하는지는 재 봐야 안다 (`GragpRAG/eval_candidates.py`, 10회 실행).
+
+| | 옛 쿼리 |
+|---|---|
+| 정렬 키가 서로 다른 값 | **1종** (전부 0) |
+| 10회 결과 집합 | 1종 (일정) |
+| 10회 결과 순서 | 1종 (일정) |
+
+**실행마다 바뀌지는 않는다.** 저장 순서로 결정되고 그 순서는 안정적이다.
+문제는 불안정이 아니라 **순위에 근거가 없다**는 것이다. 결과는 "유행하는 재료 10개"가
+아니라 "저장 순서상 앞의 재료 10개"이고, 질문과 아무 관계가 없다.
+
+> 조용히 틀리는 쪽이 더 나쁘다. 결과가 흔들렸다면 금방 눈치챘을 것이다.
+> 안정적으로 엉뚱한 답을 주기 때문에 프롬프트 문제로 오인된다.
 
 메뉴 경로는 `HAS_TAG`·`HAS_SEASON`·`HAS_CATEGORY` — **실재하는 관계**를 타고
 `k.count` 로 정렬한다. 같은 제약 문구인데 23배 갈린 것은 프롬프트 차이가 아니라
@@ -117,15 +132,28 @@ RETURN i.name ORDER BY usage_count DESC LIMIT 10
 측정하지 않았으면 프롬프트를 고치고 있었을 것이다.
 
 **수정** — 실재하는 `IS_COMBO_WITH`·`INCLUDES`·`RECORDED_ON` 만 타도록 바꿨다
-(`GragpRAG/candidates.py`). 실제 Neo4j(2025-05-03, Ingredient 98개) 결과:
+(`GragpRAG/candidates.py`).
 
-| | 상위 5개 |
-|---|---|
-| 전 | 밀가루, 버터, 크림, 빵, 그릭 요거트 (`usage_count` 전부 0) |
-| 후 | 딸기(209), 크림(202), 초콜릿(179), 소금(124), 생크림(112) |
+```bash
+python GragpRAG/eval_candidates.py
+```
+
+측정 조건: 2025-05-03 데이터 **1회 적재**, Ingredient 98개(고아 0개), 각 쿼리 10회 실행.
+
+| | 상위 5개 | 정렬 키 |
+|---|---|---|
+| 전 | 밀가루, 버터, 크림, 빵, 그릭 요거트 | 전부 0 (근거 없음) |
+| 후 | **딸기(209), 크림(208), 초콜릿(183), 생크림(130), 소금(124)** | 서로 다른 값 10종 |
+
+후보에서 빠진 것은 `밀가루`·`버터`·`과일`·`견과류`·`그릭 요거트` 5개다.
+앞의 넷은 **어떤 메뉴 조합에도 등장하지 않는 일반 재료**다.
+
+> **적재 횟수를 조건에 적어야 한다.** `Keyword.count` 가 `coalesce(count,0) + $count` 로
+> 누적되므로 같은 파일을 두 번 적재하면 `freq` 가 정확히 2배가 된다 (딸기 209 → 418 실측).
+> 스크립트가 `Date` 노드 수로 회차를 세서 1회가 아니면 경고한다.
 
 `tests/test_candidates.py` 8개가 실제 Neo4j 픽스처로 검증한다.
-그중 **고아 재료 제외**(집합) 테스트가 이 회귀를 잡는다 — 순위 테스트는 깨진 쿼리에서도 통과한다.
+그중 **고아 재료 제외**(집합) 테스트가 이 회귀를 잡는다. 순위 테스트는 깨진 쿼리에서도 통과한다.
 
 상세: [ADR-0006](docs/adr/0006-llm-hallucination-candidate-restriction.md) ·
 [그래프 스키마](docs/architecture/data-model.md)
@@ -288,8 +316,11 @@ python PostgreSQL/save_PSQL.py         # ⑨ PostgreSQL 적재
 ### 측정
 
 ```bash
-# 후보 밖 생성률 (저장된 답변으로 계산 — API 호출 없음)
+# 후보 밖 생성률 (저장된 답변으로 계산, API 호출 없음)
 python GragpRAG/eval_grounding.py
+
+# 재료 후보 목록 전/후 (Neo4j 필요, API 호출 없음)
+python GragpRAG/eval_candidates.py
 
 # 정제 정밀도 표본 추출 → label 칸 채운 뒤 score
 python agent/eval_filter.py sample

@@ -23,6 +23,7 @@ LLM 3단계가 비결정적이고 배치 TF-IDF 가 코퍼스에 의존하기 �
 |---|---|---|---|---|
 | 정제 필터 정밀도 | LLM 없는 정렬을 유의하게 초과 | D | **57.1%** vs 기준선 6.1% | ✅ |
 | 재료 경로 후보 밖 생성률 | 메뉴 경로(2.2%) 수준 | D | **50.0%** | ❌ 재측정 대기 |
+| └ 후보 정렬 키의 근거 | 0 이 아닌 값 | C | 0종 → **10종** | ✅ |
 | 회차 삭제 후 잔여 노드 | 0 | C | **0** (712노드) | ✅ |
 | 회차 태그 없는 Keyword | 0 | C | 251 → **0** | ✅ |
 | `Keyword.count` NULL 오염 | 0 | C | **0** | ✅ |
@@ -81,12 +82,34 @@ LLM 신뢰구간 하한 43.3% 가 기준선 6.1% 를 한참 넘는다. **LLM 단
 | 메뉴 경로 (대조군) | 20건 | 92개 | 2.2% |
 | 재료 경로 | 4건 | 20개 | **50.0%** |
 
-23배 차이는 프롬프트 차이로 설명되지 않는다. 원인은 Cypher 였다 —
+23배 차이는 프롬프트 차이로 설명되지 않는다. 원인은 Cypher 였다.
 `CONTAINS_INGREDIENT` 를 만드는 코드가 없는데 `OPTIONAL MATCH` 로 조회해
-모든 재료의 `usage_count` 가 0 이 되고 정렬이 무작위가 됐다.
+모든 재료의 `usage_count` 가 0 이 되고 정렬이 근거를 잃었다.
 
 **Cypher 는 고쳤다**(`GragpRAG/candidates.py`). 생성률 재측정에는 OpenAI 키가 필요해
 아직 못 했으므로 **이 칸은 미달로 남겨 둔다.** 고쳤다고 적고 넘어가면 측정이 아니다.
+
+### 대신 잰 것 — 후보 목록의 품질
+
+생성률은 못 재도 그 **입력**은 Neo4j 만으로 잰다 (`GragpRAG/eval_candidates.py`).
+2025-05-03 데이터 1회 적재, Ingredient 98개(고아 0개), 각 쿼리 10회 실행.
+
+| | 전 | 후 |
+|---|---|---|
+| 상위 5 | 밀가루, 버터, 크림, 빵, 그릭 요거트 | 딸기(209), 크림(208), 초콜릿(183), 생크림(130), 소금(124) |
+| 정렬 키가 서로 다른 값 | **1종 (전부 0)** | 10종 |
+| 10회 결과 집합·순서 | 각 1종 | 각 1종 |
+| `CONTAINS_INGREDIENT` 존재 | `db.relationshipTypes()` 에 **없음** | 사용 안 함 |
+
+**옛 쿼리도 결과는 일정했다.** "정렬이 무작위가 된다"는 부정확한 서술이었고,
+정확히는 순위에 근거가 없어 저장 순서로 고정된다는 것이다.
+안정적으로 질문과 무관한 답을 주므로 프롬프트 문제로 오인되기 쉽다.
+
+이 측정은 **생성률을 대신하지 않는다.** 생성률 주장의 전제(후보가 엉망이었다)를
+확인하고, 그 전제가 제거됐음을 보일 뿐이다.
+
+> `Keyword.count` 가 누적되므로 **적재 횟수가 `freq` 를 바꾼다** (2회 적재 시 딸기 209 → 418).
+> 스크립트가 `Date` 노드 수로 회차를 세서 1회가 아니면 경고한다.
 
 ---
 
@@ -177,7 +200,8 @@ LLM 신뢰구간 하한 43.3% 가 기준선 6.1% 를 한참 넘는다. **LLM 단
 ```bash
 python agent/eval_filter.py score           # 정밀도 / 재현율
 python agent/eval_filter.py baseline        # LLM 없는 기준선 대조
-python GragpRAG/eval_grounding.py           # 후보 밖 생성률
+python GragpRAG/eval_grounding.py           # 후보 밖 생성률 (저장된 답변)
+python GragpRAG/eval_candidates.py          # 후보 목록 전/후 (Neo4j 필요)
 python neo4j/cleanup.py stats               # 그래프 현황 + 고아 노드
 python spark/verify_reproducibility.py compare data/8차/keywords.jsonl data/2025-05-03/keywords.jsonl
 python spark/menu_join.py --mode salt --repeat 3

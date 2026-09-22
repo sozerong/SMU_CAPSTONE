@@ -1,8 +1,13 @@
 import json
+import sys
 from neo4j import GraphDatabase
 from dotenv import load_dotenv
 import os
 from datetime import datetime
+
+# Windows 기본 콘솔은 cp949 라 진행 로그의 이모지에서 UnicodeEncodeError 로 죽는다.
+# 저장소의 다른 스크립트와 같은 처리를 둔다.
+sys.stdout.reconfigure(encoding="utf-8")
 
 # ✅ 환경 변수 로드
 load_dotenv(dotenv_path="configs/.env")
