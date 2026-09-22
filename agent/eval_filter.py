@@ -32,6 +32,10 @@ food_fillter.py 의 LLM 필터가 얼마나 정확한지 재려면 라벨이 필
     3) 지표 계산
        python agent/eval_filter.py score
 
+현재 저장된 라벨은 Claude 가 위 기준으로 단독 판정한 것이다 (ANNOTATOR 참조).
+사람이 다시 라벨링하면 ANNOTATOR 를 바꾸고 score 를 다시 돌릴 것 —
+판정자가 누구냐가 이 지표의 일부다.
+
 JAVA_HOME 이 Java 9+ 를 가리켜야 한다 (Okt/JPype 요구사항).
 """
 
@@ -60,6 +64,9 @@ SAMPLE_N     = 100
 SEED         = 20260921
 
 CRITERION = "카페 메뉴판에 단독 품목으로 올라갈 수 있는가? (y/n)"
+
+# 라벨을 누가 달았는지가 지표의 일부다. 사람이 다시 달면 이 값을 바꿀 것.
+ANNOTATOR = "Claude (LLM 단일 판정, 사람 교차검증 없음)"
 
 # food_fillter.py 에서 그대로 가져온다 — 재현이 목적이라 값이 갈라지면 안 된다
 sys.path.insert(0, os.path.join(BASE_DIR, "agent"))
@@ -248,10 +255,11 @@ def cmd_score() -> None:
     print(f"  재현율 = {recall(fn_est):.1%}   (구간 {recall(fn_hi):.1%} ~ {recall(fn_lo):.1%})")
     print()
     print("  주의: 재현율은 표본 외삽이라 점추정이 아니라 구간으로 읽어야 한다.")
-    print("        라벨은 단일 판정자 기준이다 (교차 검증 없음).")
+    print(f"        판정자: {ANNOTATOR}")
 
     out = {
-        "criterion": CRITERION, "denominator_top_n": TOP_N, "seed": SEED,
+        "criterion": CRITERION, "annotator": ANNOTATOR,
+        "denominator_top_n": TOP_N, "seed": SEED,
         "kept": {"labeled": kept_n, "total": kept_total, "true_menu": tp, "false_pass": fp,
                  "precision": precision, "precision_ci95": [p_lo, p_hi]},
         "dropped": {"labeled": sample_n, "total": dropped_total,

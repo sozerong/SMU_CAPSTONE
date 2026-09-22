@@ -1,0 +1,38 @@
+{
+  "criterion": "카페 메뉴판에 단독 품목으로 올라갈 수 있는가? (y/n)",
+  "annotator": "Claude (LLM 단일 판정, 사람 교차검증 없음)",
+  "denominator_top_n": 500,
+  "seed": 20260921,
+  "kept": {
+    "labeled": 49,
+    "total": 49,
+    "true_menu": 28,
+    "false_pass": 21,
+    "precision": 0.5714285714285714,
+    "precision_ci95": [
+      0.4327024751701555,
+      0.6997689110104295
+    ]
+  },
+  "dropped": {
+    "labeled": 100,
+    "total": 273,
+    "missed": 3,
+    "correct": 97,
+    "miss_rate": 0.03,
+    "miss_rate_ci95": [
+      0.010254338223414811,
+      0.08452078080402699
+    ],
+    "missed_est": 8.19,
+    "missed_est_ci95": [
+      2.7994343349922435,
+      23.074173159499367
+    ]
+  },
+  "recall_point": 0.7736943907156674,
+  "recall_ci95": [
+    0.5482222866840917,
+    0.9091076055311927
+  ]
+}
