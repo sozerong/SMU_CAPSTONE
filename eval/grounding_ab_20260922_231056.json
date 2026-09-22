@@ -1,0 +1,79 @@
+{
+  "model": "gpt-4",
+  "temperature": 0.3,
+  "repeat": 3,
+  "questions": [
+    "최근 유행하는 재료",
+    "SNS에서 핫한 메뉴",
+    "카페 신메뉴 추천",
+    "달콤한 메뉴가 필요할 때",
+    "비주얼이 예쁜 메뉴",
+    "계절 한정 디저트"
+  ],
+  "rounds_loaded": 1,
+  "ingredient_candidates": {
+    "old": [
+      "찰떡",
+      "트러플",
+      "찹쌀떡",
+      "흑임자",
+      "노스 카나 겔",
+      "멜로 딸기",
+      "쫀득한 식감",
+      "프랑스",
+      "카페",
+      "망고"
+    ],
+    "new": [
+      "딸기",
+      "크림",
+      "초콜릿",
+      "생크림",
+      "소금",
+      "케이크",
+      "우유",
+      "빵",
+      "쿠키",
+      "바닐라"
+    ]
+  },
+  "by_path": {
+    "ingredient_old": {
+      "answers": 3,
+      "parse_fail": 0,
+      "items": 15,
+      "out_lenient": 0,
+      "out_strict": 0,
+      "rate_lenient": 0.0,
+      "rate_strict": 0.0
+    },
+    "ingredient_new": {
+      "answers": 3,
+      "parse_fail": 0,
+      "items": 15,
+      "out_lenient": 0,
+      "out_strict": 0,
+      "rate_lenient": 0.0,
+      "rate_strict": 0.0
+    },
+    "menu_old": {
+      "answers": 0,
+      "parse_fail": 0,
+      "items": 0,
+      "out_lenient": 0,
+      "out_strict": 0,
+      "rate_lenient": null,
+      "rate_strict": null
+    },
+    "menu_new": {
+      "answers": 0,
+      "parse_fail": 0,
+      "items": 0,
+      "out_lenient": 0,
+      "out_strict": 0,
+      "rate_lenient": null,
+      "rate_strict": null
+    }
+  },
+  "measured_at": "20260922_231056"
+}

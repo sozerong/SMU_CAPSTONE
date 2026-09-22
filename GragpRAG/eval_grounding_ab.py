@@ -139,7 +139,16 @@ def score(rows: List[dict]) -> Dict[str, Any]:
     }
 
 
-def run_arm(session, llm, arm: str, repeat: int) -> Tuple[List[dict], List[str]]:
+def pick_questions(only: str) -> List[str]:
+    """`--only` 필터. 재료 경로만 돌리면 API 비용이 6분의 1 이 된다."""
+    if only == "ingredient":
+        return [q for q in QUESTIONS if "재료" in q]
+    if only == "menu":
+        return [q for q in QUESTIONS if "재료" not in q]
+    return list(QUESTIONS)
+
+
+def run_arm(session, llm, arm: str, repeat: int, questions: List[str]) -> Tuple[List[dict], List[str]]:
     rows: List[dict] = []
     seen_candidates: List[str] = []
     # langchain 0.1 이후 메시지 클래스가 langchain_core 로 옮겨졌다.
@@ -151,7 +160,7 @@ def run_arm(session, llm, arm: str, repeat: int) -> Tuple[List[dict], List[str]]
         from langchain.schema import SystemMessage, HumanMessage
 
     for rep in range(repeat):
-        for q in QUESTIONS:
+        for q in questions:
             kws = session.execute_read(fetch_candidates, q, arm)
             if "재료" in q and not seen_candidates:
                 seen_candidates = kws
@@ -164,14 +173,16 @@ def run_arm(session, llm, arm: str, repeat: int) -> Tuple[List[dict], List[str]]
 
 
 def report(all_rows: List[dict], model: str, repeat: int, rounds: int,
-           cands: Dict[str, List[str]], stamp: str) -> None:
+           cands: Dict[str, List[str]], stamp: str) -> Dict[str, Any]:
     """채점과 출력. 저장된 원문으로 재채점할 때도 같은 경로를 탄다."""
+    n_q = len({r["question"] for r in all_rows})
+
     def subset(arm: str, ingredient: bool) -> Dict[str, Any]:
         return score([r for r in all_rows
                       if r["arm"] == arm and (("재료" in r["question"]) == ingredient)])
 
     print("\n" + "=" * 70)
-    print(f"  후보 밖 생성률 A/B — model={model}, temp=0.3, 질문 {len(QUESTIONS)}개 × {repeat}회")
+    print(f"  후보 밖 생성률 A/B — model={model}, temp=0.3, 질문 {n_q}개 × {repeat}회")
     print("=" * 70)
     print(f"  적재 회차 {rounds}개"
           + ("" if rounds == 1 else "   ⚠ count 누적으로 후보 순위가 달라질 수 있다"))
@@ -207,6 +218,67 @@ def report(all_rows: List[dict], model: str, repeat: int, rounds: int,
     print(f"\n  저장: {os.path.relpath(p, BASE_DIR)}")
 
 
+def historical() -> None:
+    """
+    저장된 회차별 답변에서 재료 경로만 뽑아 **답변 단위**로 본다.
+
+    문서에 적힌 50.0% 는 항목 20개 중 10개다. 비율만 보면 "절반쯤 샌다"로 읽히는데,
+    답변 단위로 풀면 그림이 다르다. 그 차이가 원인 규명을 가른다.
+    """
+    import glob
+    files = sorted(glob.glob(os.path.join(BASE_DIR, "data", "**", "*graphrag_answers*.jsonl"),
+                             recursive=True))
+    rows = []
+    for f in files:
+        for line in open(f, encoding="utf-8"):
+            if not line.strip():
+                continue
+            r = json.loads(line)
+            if "재료" not in r.get("question", ""):
+                continue
+            names, why = parse_answer(r.get("answer"))
+            if names is None:
+                rows.append({"round": os.path.basename(os.path.dirname(f)),
+                             "n": 0, "out": 0, "note": why, "cands": r.get("keywords", [])})
+                continue
+            bad = [n for n in names if not is_grounded(n, r.get("keywords", []), strict=False)]
+            rows.append({"round": os.path.basename(os.path.dirname(f)),
+                         "n": len(names), "out": len(bad), "note": "",
+                         "cands": r.get("keywords", []), "generated": names, "outside": bad})
+
+    print("=" * 70)
+    print("  저장된 재료 경로 답변 — 답변 단위 분해")
+    print("=" * 70)
+    tot_n = tot_out = 0
+    for r in rows:
+        tot_n += r["n"]; tot_out += r["out"]
+        rate = f"{r['out']/r['n']:.0%}" if r["n"] else r["note"]
+        print(f"\n  [{r['round']}] 항목 {r['n']} 중 후보 밖 {r['out']}  ({rate})")
+        print(f"    후보: {', '.join(r['cands'])}")
+        if r.get("generated"):
+            print(f"    생성: {', '.join(r['generated'])}")
+    print(f"\n  합계: {tot_out}/{tot_n} = {tot_out/tot_n:.1%}" if tot_n else "")
+
+    # 같은 후보 목록이 서로 다른 결과를 냈는가 — 인과 판정의 핵심
+    by_cands = defaultdict(list)
+    for r in rows:
+        if r["n"]:
+            by_cands[tuple(r["cands"])].append((r["round"], r["out"] / r["n"]))
+    print("\n  동일 후보 목록에서의 결과:")
+    for cands, obs in by_cands.items():
+        rates = {round(v, 3) for _, v in obs}
+        flag = "  ← 같은 후보인데 결과가 갈린다" if len(rates) > 1 else ""
+        print(f"    {', '.join(cands[:4])}...  →  "
+              f"{', '.join(f'{rd} {v:.0%}' for rd, v in obs)}{flag}")
+
+    out = os.path.join(OUT_DIR, "grounding_historical.json")
+    os.makedirs(OUT_DIR, exist_ok=True)
+    json.dump({"rows": rows, "items": tot_n, "outside": tot_out,
+               "rate": tot_out / tot_n if tot_n else None},
+              open(out, "w", encoding="utf-8"), ensure_ascii=False, indent=2)
+    print(f"\n  저장: {os.path.relpath(out, BASE_DIR)}")
+
+
 def rescore(path: str) -> None:
     """저장된 원문으로 다시 채점한다 — 판정 로직을 고쳤을 때 API 를 다시 쓰지 않는다."""
     rows = [json.loads(l) for l in open(path, encoding="utf-8") if l.strip()]
@@ -220,7 +292,7 @@ def rescore(path: str) -> None:
     report(rows, model, repeat, rounds, cands, datetime.now().strftime("%Y%m%d_%H%M%S"))
 
 
-def main(repeat: int, model: str) -> None:
+def main(repeat: int, model: str, only: str = "all") -> None:
     from dotenv import load_dotenv
     from langchain_openai import ChatOpenAI
     from neo4j import GraphDatabase
@@ -236,13 +308,14 @@ def main(repeat: int, model: str) -> None:
     driver = GraphDatabase.driver(uri, auth=auth)
     llm = ChatOpenAI(temperature=0.3, model=model)
 
+    questions = pick_questions(only)
     per_arm: Dict[str, dict] = {}
     all_rows: List[dict] = []
     cands: Dict[str, List[str]] = {}
     with driver.session() as s:
         rounds = s.execute_read(lambda tx: tx.run("MATCH (d:Date) RETURN count(d) AS n").single()["n"])
         for arm in ("old", "new"):
-            rows, c = run_arm(s, llm, arm, repeat)
+            rows, c = run_arm(s, llm, arm, repeat, questions)
             per_arm[arm] = score(rows)
             cands[arm] = c
             all_rows += rows
@@ -297,13 +370,18 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser(description="후보 Cypher 수정의 A/B 효과")
     ap.add_argument("--repeat", type=int, default=4, help="질문 세트 반복 횟수 (팔마다)")
     ap.add_argument("--model", default="gpt-4o-mini")
+    ap.add_argument("--only", choices=["all","ingredient","menu"], default="all")
+    ap.add_argument("--historical", action="store_true",
+                    help="저장된 회차별 답변을 답변 단위로 분해 (API 없음)")
     ap.add_argument("--selftest", action="store_true")
     ap.add_argument("--rescore", metavar="RAW_JSONL",
                     help="저장된 원문으로 재채점 (API 호출 없음)")
     a = ap.parse_args()
     if a.selftest:
         selftest()
+    elif a.historical:
+        historical()
     elif a.rescore:
         rescore(a.rescore)
     else:
-        main(a.repeat, a.model)
+        main(a.repeat, a.model, a.only)
