@@ -1,58 +1,172 @@
-# 🍽️ Menu Trend Graph Project
+# VCC — 유튜브 기반 카페 메뉴 트렌드 분석
 
-키워드를 기반으로 트렌디한 조합 키워드를 생성하고, 이를 LLM을 통해 분류/설명한 뒤 Neo4j에 구조화하여 저장하는 데이터 파이프라인 프로젝트입니다.
+유튜브 영상 제목·설명문에서 메뉴 키워드를 추출하고, 태그·계절·카테고리가 연결된
+후보 안에서만 신메뉴를 제안하는 파이프라인.
 
----
+프로젝트 종료 후 **"후보 안에서만 생성한다"는 설계 주장이 실제로 지켜졌는지 직접 측정**했다.
+결론부터: 메뉴 경로는 지켜졌고, 재료 경로는 지켜지지 않았다.
 
-## 📌 프로젝트 개요
+| 항목 | 값 | 측정 조건 |
+|---|---|---|
+| 키워드 정제 | 후보 322개 → 메뉴 49개 (잔존율 15.2%) | 8차 데이터, Okt 추출 후 |
+| 후보 밖 생성률 — 메뉴 경로 | **2.2%** (2/92) | 저장된 답변 24건 전수 |
+| 후보 밖 생성률 — 재료 경로 | **50.0%** (10/20) | 같음 |
 
-- 실시간 크롤링된 YouTube 데이터를 기반으로 키워드 추출 (TF-IDF)
-- 연속 명사 기반 키워드 후처리 + LLM을 통해 카페메뉴 관련 키워드만 필터링
-- LLM이 키워드 조합을 생성 (예: "노오븐 초코 치즈케이크")
-- 생성된 키워드를 LLM Agent가 요약 정보 구성 (설명, 카테고리, 예시, 계절 등)
-- 최종 결과를 Neo4j에 관계형 그래프 구조로 저장
+> 후보 밖 생성률은 **lenient 기준**(생성 이름에 후보 키워드가 하나도 안 들어간 경우)이다.
+> 완전 일치(strict) 기준으로는 70.5%인데, 그 대부분은 후보를 **조합한** 결과라
+> 이 프로젝트의 의도(조합 생성)와 부합한다. 기준에 따라 숫자가 6배 차이 나므로 둘 다 적는다.
 
----
+## 아키텍처
 
-## 📂 폴더 구조
+```mermaid
+flowchart LR
+  Y[YouTube API<br/>제목·설명문] --> K[Kafka]
+  K --> S[Spark TF-IDF<br/>bi-gram · 영상당 8개]
+  S --> O[Okt 정제<br/>명사 + 2~3gram · 금칙어]
+  O --> F[LLM 필터<br/>gpt-4 · temp 0]
+  F --> N[(Neo4j<br/>Keyword–Tag–Season–Category–Combo)]
+  N --> C[Cypher 후보 탐색<br/>재료 경로 / 메뉴 경로 분기]
+  C --> L[LLM 생성<br/>gpt-4 · temp 0.3<br/>후보 외 생성 금지]
+  L --> V{JSON 파싱}
+  V -->|성공| E[(Elasticsearch<br/>서빙 검색)]
+  V -->|실패| X[print 후 건너뜀<br/>※ 격리 저장 미구현]
+```
+
+## 데이터 흐름
+
+| 단계 | 처리 | 출력 | 쓰기 방식 |
+|---|---|---|---|
+| 수집 | YouTube API 영상 단위 | Kafka | append |
+| 키워드 추출 | Tokenizer → bi-gram → CountVectorizer(10k) → IDF → 상위 8개 | 영상별 키워드 | 배치 전체 재계산 |
+| 정제 | Okt 명사 + 2~3gram, 금칙어 필터 → 점수순 상위 500 컷 | 후보 322개 | 규칙 기반 |
+| LLM 필터 | gpt-4 (temp 0), 50개 이내 요청 | 메뉴 49개 | — |
+| 그래프 적재 | Keyword–Tag–Season–Category–Combo | Neo4j | **`MERGE` (upsert, 삭제 없음)** |
+| 후보 탐색 | Cypher — "재료" 포함 여부로 분기 | 후보 10개 | — |
+| 생성 | 후보만 주입 + 후보 외 생성 금지 | 조합 JSON | gpt-4, temp 0.3 |
+| 색인 | 인덱스 삭제 후 재생성, 고정 id(`q_N`) | Elasticsearch | **전체 재적재** |
+
+LLM은 단계마다 다르다. 재현성을 따질 때 이 표가 근거가 된다.
+
+| 파일 | 모델 | temperature |
+|---|---|---|
+| `agent/food_fillter.py` | gpt-4 | 0 |
+| `agent/keyword_combined.py` | gpt-4 | 0.3 |
+| `agent/keyword_info_collector.py` | gpt-3.5-turbo | 0.2 |
+| `GragpRAG/graphrag_aq.py` | gpt-4 | 0.3 |
+
+## 문제 정의
+
+영상 텍스트에는 메뉴가 아닌 콘텐츠성 단어("먹방", "리뷰", "도전")가 더 많다.
+무엇이 실제 메뉴인지 걸러내는 것이 핵심이었고, LLM을 쓰자 원천에 없는 값이
+에러 없이 색인되는 문제가 생겼다. 그래서 **프롬프트로 타이르는 대신 후보를 먼저 좁혀서**
+LLM이 고를 수 있는 범위 자체를 제한했다.
+
+## 후보 밖 생성률 — 설계 주장의 실측
+
+`GragpRAG/graphrag_aq.py` 는 두 프롬프트 모두에 제약을 건다.
+
+```
+"❗ 주어진 키워드 외의 재료를 생성하면 안 됩니다."   (재료 질문)
+"❗ 제공된 키워드 외 메뉴를 생성하지 마세요."        (메뉴 질문)
+```
+
+저장된 답변에 그때 넘긴 후보 키워드가 같이 들어 있어, API 재호출 없이 셀 수 있다.
 
 ```bash
-project/
-├── agent/                     # LLM Agent 관련 코드
-│   ├── keyword_agent.py       # SerpAPI/Playwright 기반 정보 수집 Agent
-│   ├── food_filter.py         # 카페메뉴 키워드 필터링 LLM
-│   ├── keyword_combined.py    # LLM이 키워드 조합 생성 + count 반영
-│   └── keyword_info_collector.py # 조합 키워드에 대해 정보 수집 Agent
-│
-├── data/                      # 중간 생성 데이터
-│   ├── keywords.jsonl
-│   ├── filtered_keywords_with_count.jsonl
-│   ├── generated_keywords_with_new_count.jsonl
-│   └── neo4j_ready_keywords.jsonl
-│
-├── kafka/                     # Kafka 기반 YouTube 데이터 수집
-│   └── youtube_crawler.py
-│
-├── spark/                     # Spark 기반 TF-IDF 추출
-│   └── spark_keyword.py
-│
-├── neo4j/                     # Neo4j 구조 저장 관련 코드
-│   ├── neo4j_schema.py        # 생성된 키워드와 정보, 관계 저장 코드
-│   └── reset_graph.py         # 전체 그래프 삭제 (초기화)
-│
-├── configs/                   # 환경변수 파일 (.env)
-│   └── .env
-│
-├── .gitignore
-└── README.md
+python GragpRAG/eval_grounding.py
+```
 
+| 경로 | 답변 | 생성 항목 | 후보 밖(lenient) |
+|---|---|---|---|
+| 재료 경로 | 4건 | 20개 | **10개 (50.0%)** |
+| 메뉴 경로 | 20건 | 92개 | 2개 (2.2%) |
 
+**같은 제약을 걸었는데 경로에 따라 23배 차이가 난다.** 재료 경로에서 나온 후보 밖 값은
+아보카도·코코넛·매실·망고·요거트·고구마, 그리고 `쿠알라룸푸르`(도시명)였다.
 
-1. kafka/youtube_crawler.py
-2. spark/spark_keyword.py
-3. agent/food_fillter.py
-4. agent/keyword_info_collector.py
-5. neo4j/neo4j_schema.py
-6. GragpRAG/graphrag_aq.py
-7. Postgresql/save_PSQL.py
-8. movefile.py
+원인은 후보를 만드는 Cypher가 다르기 때문으로 보인다. 재료 경로는
+`MATCH (i:Ingredient)` 로 **사용 빈도 상위 10개**만 뽑아 넘기는데, 그 10개가
+"크림·초코·딸기·치즈·우유·커피·녹차" 같은 일반 재료라 "유행하는 재료"라는 질문에
+답이 되지 못한다. 후보가 질문에 못 미치면 모델이 밖에서 끌어온다.
+
+→ 남은 과제에 적었다. 후보 선정 자체를 질문 의도에 맞추지 않으면 프롬프트로는 막히지 않는다.
+
+## 설계 결정
+
+[docs/adr](docs/adr) 에 결정 시점의 근거와 기각한 대안을 남겼다.
+
+- [ADR-0006](docs/adr/0006-llm-hallucination-candidate-restriction.md) LLM 환각 대응 — 후보 선행 제한 (부분 성공)
+- [ADR-0007](docs/adr/0007-idempotent-reload.md) 저장소별 재적재 방식
+- [ADR-0008](docs/adr/0008-skew-not-mitigated.md) 스큐 대응 미적용
+
+## 별도 실험: 키워드 × 카페 메뉴 조인과 스큐 대응
+
+**이건 프로젝트 당시 작업이 아니라 이후에 새로 만든 것이다.**
+원래 저장소에는 조인도, 메뉴명 정규화도, groupBy 집계도, salting/broadcast도 없었다.
+
+서울시 공공데이터에 메뉴명 단위 데이터셋이 없어 **합성 데이터**로 만들었다
+(`spark/make_cafe_menu.py` — 합성임을 생성기와 문서 양쪽에 명시).
+
+키워드 6,494종 × 메뉴 129만 행, AQE 비활성, 각 3회 p50:
+
+| 방식 | 소요 | 파티션 편차(max/median) |
+|---|---|---|
+| plain (SortMergeJoin) | **44.44s** | 4.76 |
+| broadcast | 47.96s (**+8%**) | 4.76 |
+| salting (상위 5키 × 16버킷) | 62.03s (**+40%**) | **2.39** |
+
+- broadcast 힌트는 `explain()` 상 조인 방식이 확실히 바뀌었는데도 느려졌다.
+- salting 은 편차를 절반으로 줄였지만 2단계 집계 비용이 더 컸다.
+- **이 규모에서 스큐는 병목이 아니었다.** 단일 노드 기준이라 클러스터에서는 다를 수 있다.
+
+상세: [BENCHMARK.md](BENCHMARK.md) / [IMPROVEMENTS.md](IMPROVEMENTS.md)
+
+## 실행 방법
+
+### 파이프라인 (순서대로)
+
+```bash
+python kafka/youtube_crawler.py        # ① YouTube 수집 → Kafka
+python spark/spark_keyword.py          # ② TF-IDF 키워드 추출 → data/keywords.jsonl
+python agent/food_fillter.py           # ③ Okt 정제 + LLM 필터 → filtered_keywords_with_count.jsonl
+python agent/keyword_combined.py       # ④ 조합 키워드 생성
+python agent/keyword_info_collector.py # ⑤ 조합별 정보 수집 → neo4j_ready_keywords.jsonl
+python neo4j/neo4j_schema.py           # ⑥ Neo4j 그래프 적재
+python GragpRAG/graphrag_aq.py         # ⑦ 후보 탐색 + LLM 생성 → graphrag_answers.jsonl
+python ElasticSearch/es_indexer.py     # ⑧ Elasticsearch 색인
+python PostgreSQL/save_PSQL.py         # ⑨ PostgreSQL 적재
+```
+
+③~⑦ 은 OpenAI API 키가 필요하다 (`configs/.env`).
+`movefile.py` 는 산출물을 날짜 폴더(`data/YYYY-MM-DD/`)로 옮긴다.
+
+### 측정
+
+```bash
+# 후보 밖 생성률 (저장된 답변으로 계산 — API 호출 없음)
+python GragpRAG/eval_grounding.py
+
+# 정제 정밀도 표본 추출 → label 칸 채운 뒤 score
+python agent/eval_filter.py sample
+python agent/eval_filter.py score
+
+# 조인 파이프라인 (합성 메뉴 데이터 생성 후)
+python spark/make_cafe_menu.py --cafes 120000
+python spark/menu_join.py --mode plain --repeat 3
+```
+
+`eval_filter.py` 는 Okt 때문에 **Java 9 이상**이 필요하다 (`JAVA_HOME` 설정).
+
+## 남은 과제
+
+- **재료 경로 후보 밖 생성률 50%.** 후보 선정 Cypher를 질문 의도에 맞게 고쳐야 한다.
+  프롬프트 문구로는 막히지 않는 것이 측정으로 확인됐다.
+- **파싱 실패 격리 미구현.** 현재는 `print` 후 건너뛴다. 실패 건수 집계도 없어서
+  "스키마 실패율"을 낼 수 없다. dead letter 저장과 카운터가 필요하다.
+- **Neo4j 재적재가 `MERGE` 뿐이라 이전 회차 노드가 남는다.** 범위 삭제 또는
+  회차 태깅 후 정리가 필요하다. (Elasticsearch 는 인덱스 전체 재생성이라 문제없다)
+- **정제 결과(49개) 정밀도 미측정.** 표본 추출까지 끝냈고 라벨링이 남았다
+  (`eval/kept_49.csv`, `eval/dropped_sample.csv`).
+- **재현성 미검증.** 파이프라인에 temperature > 0 인 LLM이 3개 있고 캐시·시드가 없어
+  LLM 산출물까지 포함한 회차 간 일치는 성립하지 않는다. 비교 범위를 Spark 산출물까지로
+  한정하면 검증 가능하다.
