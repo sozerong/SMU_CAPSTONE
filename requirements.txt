@@ -38,3 +38,8 @@ uvicorn[standard]
 
 # ✅ 기타 (데이터 처리)
 pandas
+
+# ── 아래는 코드가 쓰는데 선언이 빠져 있던 것 ──────────────────
+konlpy                   # agent/food_fillter.py 의 Okt — Java 9 이상 필요
+langchain-openai         # ChatOpenAI (langchain 만으로는 부족)
+langsmith                # @traceable
