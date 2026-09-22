@@ -39,6 +39,7 @@ flowchart LR
 |---|---|
 | [docs/architecture/spark.md](docs/architecture/spark.md) | TF-IDF 잡 내부, 조인/스큐 실험 구현 |
 | [docs/architecture/data-model.md](docs/architecture/data-model.md) | **Neo4j 그래프 스키마**, ES 매핑, 파일 단계 |
+| [docs/metrics.md](docs/metrics.md) | **SLO 와 그 목표치의 근거** — 목표를 못 세우는 항목 포함 |
 | [docs/adr](docs/adr) | 설계 결정 3건 |
 
 ## 데이터 흐름
@@ -147,6 +148,27 @@ python agent/eval_filter.py score
 **분모는 322다.** 영상 575줄도, 고유 키워드 852개도 아니다 —
 Okt 명사+2~3gram 추출과 금칙어 필터를 거친 뒤 `phrase_counter` 크기가 322고,
 상위 500 컷에 걸리지 않아 전부 LLM 입력이 된다. 잔존율은 8.5%가 아니라 **15.2%**.
+
+### 57.1% 는 좋은 값인가 — LLM 없는 기준선과 대조
+
+목표치를 내가 정하면 답이 안 된다. **LLM 을 빼 보면** 근거가 생긴다.
+같은 정렬(`score_priority`)의 상위 49개를 그냥 쓰면 얼마인가? 출력 개수가 같으니 공평하다.
+
+```bash
+python agent/eval_filter.py baseline
+```
+
+| | 정밀도 |
+|---|---|
+| 기준선 (LLM 없이 점수 상위 49) | **6.1%** (층화 추정) |
+| LLM 필터 | **57.1%** (95% CI 43.3~70.0%) |
+| 차이 | **+51.0%p** |
+
+신뢰구간 하한 43.3% 가 기준선을 한참 넘는다 — **LLM 단계는 값을 한다.**
+
+기준선이 낮은 이유가 더 중요하다. 점수 상위는 `리얼 사운드`(24), `에어 프라이어`(18),
+`리얼`(12), `사운드`(12) 처럼 **빈도만 높은 콘텐츠성 단어**로 채워진다.
+빈도 정렬은 "많이 나온 말"을 고르지 "메뉴"를 고르지 않는다.
 
 읽는 법 두 가지.
 
@@ -270,6 +292,7 @@ python GragpRAG/eval_grounding.py
 # 정제 정밀도 표본 추출 → label 칸 채운 뒤 score
 python agent/eval_filter.py sample
 python agent/eval_filter.py score
+python agent/eval_filter.py baseline    # LLM 없는 정렬과 대조
 
 # Neo4j 정리 (회차 단위)
 python neo4j/cleanup.py stats
