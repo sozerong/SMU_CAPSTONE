@@ -50,8 +50,23 @@ graph LR
 | `Ingredient` | `name` | `Combo` 를 통해서만 생성된다 |
 | `Example` | `value` (예시 문장) | |
 
-**`Keyword.count` 는 누적된다.** `ON MATCH SET k.count = k.count + $count` 라
+**`Keyword.count` 는 누적된다.** `ON MATCH SET k.count = coalesce(k.count, 0) + $count` 라
 같은 키워드가 매주 들어오면 값이 계속 커진다. 회차별 값이 아니라 누적값이다.
+
+`coalesce` 를 쓰는 이유가 있다. 어떤 키워드가 이전 회차에 `RELATED` 대상으로만 먼저 생기면
+`count` 속성이 없다(NULL). `NULL + 숫자 = NULL` 이라 한 번 그렇게 되면 **영구히 NULL** 이고,
+`count` 로 정렬하는 후보 쿼리에서 계속 뒤로 밀린다. 실제로 재현했다.
+
+### RELATED 스텁 키워드
+
+`related[]` 에 나온 이름은 `MERGE (b:Keyword {name: $b})` 로 노드만 생긴다 —
+`count` 도 `RECORDED_ON` 도 없는 **스텁**이다.
+
+실측(2025-05-03 데이터): Keyword 337개 중 **251개(74%)가 스텁**이었다.
+`RECORDED_ON` 이 없으니 회차 단위 정리로 영원히 지울 수 없는 상태였다.
+
+→ 스텁에도 `count = 0` 과 `RECORDED_ON` 을 달도록 고쳤다.
+수정 후 `RECORDED_ON` 86 → **337**, 회차 태그 없는 Keyword 0개.
 
 ### 관계
 

@@ -225,6 +225,10 @@ python GragpRAG/eval_grounding.py
 python agent/eval_filter.py sample
 python agent/eval_filter.py score
 
+# Neo4j 정리 (회차 단위)
+python neo4j/cleanup.py stats
+python neo4j/cleanup.py delete-round 2025-05-03 --dry-run
+
 # 재현성 (저장된 산출물끼리 비교 — 재실행 없음)
 python spark/verify_reproducibility.py compare data/8차/keywords.jsonl data/2025-05-03/keywords.jsonl
 
@@ -241,8 +245,8 @@ python spark/menu_join.py --mode plain --repeat 3
   프롬프트 문구로는 막히지 않는 것이 측정으로 확인됐다.
 - **dead letter 재처리 미구현.** 격리·집계는 구현했지만(`data/graphrag_dead_letter.jsonl`)
   자동 재시도는 없다. 현재는 다음 회차 재생성에 의존한다.
-- **Neo4j 재적재가 `MERGE` 뿐이라 이전 회차 노드가 남는다.** 범위 삭제 또는
-  회차 태깅 후 정리가 필요하다. (Elasticsearch 는 인덱스 전체 재생성이라 문제없다)
+- ~~Neo4j 정리 수단 없음~~ → `neo4j/cleanup.py` 추가.
+  회차 단위 삭제 + 고아 노드 정리. 전체 삭제는 `--yes` 확인이 필요하다.
 - **정제 결과(49개) 정밀도 미측정.** 표본 추출까지 끝냈고 라벨링이 남았다
   (`eval/kept_49.csv`, `eval/dropped_sample.csv`).
 - **재현성 — 같은 입력 재실행 미검증.** 아래 "재현성" 절 참조.
