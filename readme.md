@@ -156,6 +156,14 @@ python GragpRAG/eval_candidates.py
 `tests/test_candidates.py` 8개가 실제 Neo4j 픽스처로 검증한다.
 그중 **고아 재료 제외**(집합) 테스트가 이 회귀를 잡는다. 순위 테스트는 깨진 쿼리에서도 통과한다.
 
+```bash
+docker start my-neo4j          # 또는 bolt://localhost:7687 에 Neo4j 기동
+python -m pytest tests/ -q     # 8 passed
+```
+
+**Neo4j 가 떠 있지 않으면 8개 전부 skip 된다.** 픽스처가 실제 그래프를 만들어 쓰기 때문이다.
+skip 메시지에 예외 타입이 찍히므로 접속 실패인지 다른 원인인지 구분할 수 있다.
+
 상세: [ADR-0006](docs/adr/0006-llm-hallucination-candidate-restriction.md) ·
 [그래프 스키마](docs/architecture/data-model.md)
 

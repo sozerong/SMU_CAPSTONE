@@ -40,11 +40,24 @@ PASSWORD = os.environ.get("NEO4J_PASSWORD", "password123")
 @pytest.fixture(scope="module")
 def session():
     neo4j = pytest.importorskip("neo4j", reason="neo4j 드라이버 미설치")
+
+    # 저장소 루트에 neo4j/ 디렉터리가 있다. __init__.py 가 없어 네임스페이스 패키지라
+    # 보통은 site-packages 의 정규 패키지가 이기지만, sys.path 구성에 따라 가려질 수 있다.
+    # 그 경우 AttributeError 가 나는데, 아래 except 가 삼키면 "접속 불가" 로 보고돼
+    # Neo4j 를 띄워도 계속 skip 되는 원인을 못 찾는다. 먼저 구분해 둔다.
+    if not hasattr(neo4j, "GraphDatabase"):
+        raise AssertionError(
+            f"neo4j 드라이버가 저장소의 neo4j/ 디렉터리에 가려졌다 "
+            f"(해석된 경로: {getattr(neo4j, '__file__', '알 수 없음')}). "
+            f"저장소 루트 밖에서 실행하거나 PYTHONPATH 를 정리할 것."
+        )
+
     try:
         driver = neo4j.GraphDatabase.driver(URI, auth=(USER, PASSWORD))
         driver.verify_connectivity()
     except Exception as e:                                   # noqa: BLE001
-        pytest.skip(f"Neo4j 접속 불가 ({URI}): {e}")
+        # 여기 오는 것은 실제 접속 실패뿐이다. 원인 타입을 같이 남긴다.
+        pytest.skip(f"Neo4j 접속 불가 ({URI}): {type(e).__name__}: {e}")
 
     with driver.session() as s:
         s.run("MATCH (n) DETACH DELETE n")
