@@ -43,3 +43,8 @@ pandas
 konlpy                   # agent/food_fillter.py 의 Okt — Java 9 이상 필요
 langchain-openai         # ChatOpenAI (langchain 만으로는 부족)
 langsmith                # @traceable
+
+# ── 질의형 GraphRAG · 로컬 LLM · MCP (ADR-0011~0013) ──────────
+langgraph                # GragpRAG/ask_graph.py 워크플로
+langchain-ollama         # 로컬 모델 (Ollama 0.5 이상: JSON 스키마 format)
+mcp>=2.3                 # app/mcp_server.py (mcp.server.mcpserver.MCPServer)

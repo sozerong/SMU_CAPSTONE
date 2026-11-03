@@ -1,7 +1,94 @@
-# VCC — 유튜브 기반 카페 메뉴 트렌드 분석
+# VCC: 유튜브 트렌드 기반 카페 메뉴 GraphRAG
 
-유튜브 영상 제목·설명문에서 메뉴 키워드를 추출하고, 태그·계절·카테고리가 연결된
-후보 안에서만 신메뉴를 제안하는 파이프라인.
+유튜브 영상 제목·설명문에서 메뉴 키워드를 뽑아 Neo4j 지식 그래프로 만들고,
+**질문을 받으면 그래프가 허락한 후보 안에서만** 메뉴를 추천하는 시스템.
+
+캡스톤 때는 고정 질문 6개에 gpt-4 로 미리 답을 만들어 두는 배치였다. 지금은 다음과 같다.
+
+| 고도화 | 내용 | 근거 |
+|---|---|---|
+| **질의형 GraphRAG** | LangGraph 워크플로 + FastAPI `POST /ask`. 질문 → 조건 추출 → Cypher 후보 → 생성 → 검증 → 실패 시 사유를 넣어 재생성 | [ADR-0011](docs/adr/0011-query-graphrag-langgraph.md) |
+| **조건을 그래프 어휘에 묶기** | 조건 추출 스키마의 enum 을 그래프의 실제 Tag/Season/Category 로 실행 시점에 생성 | 홀드아웃 조건 정확도 규칙 20% → **80%** |
+| **로컬 LLM (폐쇄망)** | 기본 모델 qwen2.5:7b (Ollama). 같은 입력으로 gpt-4 와 비교 | 후보 밖 생성률 **0.7% vs gpt-4 0.3%, 구별 불가** |
+| **MCP 서버** | 그래프 탐색·후보 검증을 외부 에이전트(Claude 등)에 도구로 공개 | [ADR-0013](docs/adr/0013-mcp-server.md) |
+
+| 지표 | 값 | 측정 조건 |
+|---|---|---|
+| 질의 조건 추출 정확도 | 규칙 3/15 → LLM **36/45 (80.0%)** [66.2, 89.1] | 홀드아웃 15문항 × 3회, 라벨 Claude |
+| 질문과 무관한 빈도순 후보 | **77.1% → 26.7%** | 35문항 × 3회, 메뉴 경로 조건 0개 비율 |
+| 최종 검증 통과 | 90.5% → 97.1% (재생성 회복 10건) | 같은 105쌍, McNemar p=0.065 **(유의하지 않음)** |
+| 로컬 모델 후보 밖 생성률 | qwen2.5:7b **0.7%** [0.2, 2.4] / exaone3.5:7.8b 3.3% / gpt-4 0.3% | 같은 9개 입력 × 10회 |
+| 질의 지연 p50 / p95 | 2.91s / 6.35s | RTX 4070 SUPER, qwen2.5:7b |
+| MCP 도구 호출 p50 | 4~7 ms | stdio 왕복 + Neo4j 읽기 |
+
+> 통과율 상승은 이 표본에서 유의하지 않아 성과로 세지 않는다.
+> 확실한 변화는 **후보가 질문 조건을 반영하게 된 것**이고, 대조군의 실패 10건이 전부
+> "음료 질문에 빵 후보"였다는 점이 그 방향을 뒷받침한다.
+
+## 아키텍처
+
+```mermaid
+flowchart LR
+  subgraph 적재[주간 배치]
+    Y[YouTube API<br/>제목·설명문] --> K[Kafka]
+    K --> S[Spark TF-IDF<br/>bi-gram · 영상당 8개]
+    S --> O[Okt 정제<br/>명사 + 2~3gram · 금칙어]
+    O --> F[LLM 필터]
+    F --> N[(Neo4j<br/>Keyword–Tag–Season–Category–Combo)]
+  end
+  subgraph 질의[질의 서비스 · LangGraph]
+    Q[POST /ask] --> U[understand<br/>그래프 어휘 enum]
+    U --> R[retrieve<br/>Cypher + 조건 완화]
+    R --> G[generate<br/>qwen2.5:7b · 구조화 출력]
+    G --> V{validate<br/>후보 안/밖}
+    V -->|실패 · 재시도| G
+    V -->|재시도 소진| X[dead letter]
+  end
+  N --> R
+  N --> M[MCP 서버<br/>vocabulary · candidates · validate · ask]
+  M -.-> A[외부 에이전트]
+```
+
+## 더 자세히
+
+| 문서 | 내용 |
+|---|---|
+| [docs/architecture/spark.md](docs/architecture/spark.md) | TF-IDF 잡 내부, 조인/스큐 실험 구현 |
+| [docs/architecture/data-model.md](docs/architecture/data-model.md) | **Neo4j 그래프 스키마**, ES 매핑, 파일 단계 |
+| [docs/metrics.md](docs/metrics.md) | **SLO 와 그 목표치의 근거** — 목표를 못 세우는 항목 포함 |
+| [docs/adr](docs/adr) | 설계 결정 7건 |
+
+## 데이터 흐름
+
+| 단계 | 처리 | 출력 | 쓰기 방식 |
+|---|---|---|---|
+| 수집 | YouTube API 영상 단위 | Kafka | append |
+| 키워드 추출 | Tokenizer → bi-gram → CountVectorizer(10k) → IDF → 상위 8개 | 영상별 키워드 | 배치 전체 재계산 |
+| 정제 | Okt 명사 + 2~3gram, 금칙어 필터 → 점수순 상위 500 컷 | 후보 322개 | 규칙 기반 |
+| LLM 필터 | gpt-4 (temp 0), 50개 이내 요청 | 메뉴 49개 | — |
+| 그래프 적재 | Keyword–Tag–Season–Category–Combo | Neo4j | **`MERGE` (upsert, 삭제 없음)** |
+| 후보 탐색 | Cypher — "재료" 포함 여부로 분기 | 후보 10개 | — |
+| 생성 | 후보만 주입 + 후보 외 생성 금지 | 조합 JSON | qwen2.5:7b 구조화 출력, temp 0.3 (캡스톤 당시 gpt-4) |
+| 검증 | JSON 파싱 + **후보 밖 여부** 확인 | 통과분 / dead letter | `grounding.validate_answer` |
+| 색인 | 인덱스 삭제 후 재생성, 고정 id(`q_N`) | Elasticsearch | **전체 재적재** |
+
+LLM은 단계마다 다르다. 재현성을 따질 때 이 표가 근거가 된다.
+
+| 파일 | 모델 | temperature |
+|---|---|---|
+| `agent/food_fillter.py` | gpt-4 | 0 |
+| `agent/keyword_combined.py` | gpt-4 | 0.3 |
+| `agent/keyword_info_collector.py` | gpt-3.5-turbo | 0.2 |
+| `GragpRAG/graphrag_aq.py`, `ask_graph.py` | qwen2.5:7b (`generate.py`, 캡스톤 당시 gpt-4) | 0.3 |
+
+## 문제 정의
+
+영상 텍스트에는 메뉴가 아닌 콘텐츠성 단어("먹방", "리뷰", "도전")가 더 많다.
+무엇이 실제 메뉴인지 걸러내는 것이 핵심이었고, LLM을 쓰자 원천에 없는 값이
+에러 없이 색인되는 문제가 생겼다. 그래서 **프롬프트로 타이르는 대신 후보를 먼저 좁혀서**
+LLM이 고를 수 있는 범위 자체를 제한했다.
+
+## 검증 기록
 
 프로젝트 종료 후 **"후보 안에서만 생성한다"는 설계 주장이 실제로 지켜졌는지 직접 측정**했다.
 결론부터: 저장된 답변에서 메뉴 경로는 지켜졌고 재료 경로는 지켜지지 않았다.
@@ -22,61 +109,6 @@
 > 후보 밖 생성률은 **lenient 기준**(생성 이름에 후보 키워드가 하나도 안 들어간 경우)이다.
 > 완전 일치(strict) 기준으로는 70.5%인데, 그 대부분은 후보를 **조합한** 결과라
 > 이 프로젝트의 의도(조합 생성)와 부합한다. 기준에 따라 숫자가 6배 차이 나므로 둘 다 적는다.
-
-## 아키텍처
-
-```mermaid
-flowchart LR
-  Y[YouTube API<br/>제목·설명문] --> K[Kafka]
-  K --> S[Spark TF-IDF<br/>bi-gram · 영상당 8개]
-  S --> O[Okt 정제<br/>명사 + 2~3gram · 금칙어]
-  O --> F[LLM 필터<br/>gpt-4 · temp 0]
-  F --> N[(Neo4j<br/>Keyword–Tag–Season–Category–Combo)]
-  N --> C[Cypher 후보 탐색<br/>재료 경로 / 메뉴 경로 분기]
-  C --> L[LLM 생성<br/>gpt-4 · temp 0.3<br/>후보 외 생성 금지]
-  L --> V{JSON 파싱}
-  V -->|통과| E[(Elasticsearch<br/>서빙 검색)]
-  V -->|파싱 실패 · 후보 밖| X[dead letter 격리<br/>사유별 건수 집계]
-```
-
-## 더 자세히
-
-| 문서 | 내용 |
-|---|---|
-| [docs/architecture/spark.md](docs/architecture/spark.md) | TF-IDF 잡 내부, 조인/스큐 실험 구현 |
-| [docs/architecture/data-model.md](docs/architecture/data-model.md) | **Neo4j 그래프 스키마**, ES 매핑, 파일 단계 |
-| [docs/metrics.md](docs/metrics.md) | **SLO 와 그 목표치의 근거** — 목표를 못 세우는 항목 포함 |
-| [docs/adr](docs/adr) | 설계 결정 4건 |
-
-## 데이터 흐름
-
-| 단계 | 처리 | 출력 | 쓰기 방식 |
-|---|---|---|---|
-| 수집 | YouTube API 영상 단위 | Kafka | append |
-| 키워드 추출 | Tokenizer → bi-gram → CountVectorizer(10k) → IDF → 상위 8개 | 영상별 키워드 | 배치 전체 재계산 |
-| 정제 | Okt 명사 + 2~3gram, 금칙어 필터 → 점수순 상위 500 컷 | 후보 322개 | 규칙 기반 |
-| LLM 필터 | gpt-4 (temp 0), 50개 이내 요청 | 메뉴 49개 | — |
-| 그래프 적재 | Keyword–Tag–Season–Category–Combo | Neo4j | **`MERGE` (upsert, 삭제 없음)** |
-| 후보 탐색 | Cypher — "재료" 포함 여부로 분기 | 후보 10개 | — |
-| 생성 | 후보만 주입 + 후보 외 생성 금지 | 조합 JSON | gpt-4, temp 0.3 |
-| 검증 | JSON 파싱 + **후보 밖 여부** 확인 | 통과분 / dead letter | `grounding.validate_answer` |
-| 색인 | 인덱스 삭제 후 재생성, 고정 id(`q_N`) | Elasticsearch | **전체 재적재** |
-
-LLM은 단계마다 다르다. 재현성을 따질 때 이 표가 근거가 된다.
-
-| 파일 | 모델 | temperature |
-|---|---|---|
-| `agent/food_fillter.py` | gpt-4 | 0 |
-| `agent/keyword_combined.py` | gpt-4 | 0.3 |
-| `agent/keyword_info_collector.py` | gpt-3.5-turbo | 0.2 |
-| `GragpRAG/graphrag_aq.py` | gpt-4 | 0.3 |
-
-## 문제 정의
-
-영상 텍스트에는 메뉴가 아닌 콘텐츠성 단어("먹방", "리뷰", "도전")가 더 많다.
-무엇이 실제 메뉴인지 걸러내는 것이 핵심이었고, LLM을 쓰자 원천에 없는 값이
-에러 없이 색인되는 문제가 생겼다. 그래서 **프롬프트로 타이르는 대신 후보를 먼저 좁혀서**
-LLM이 고를 수 있는 범위 자체를 제한했다.
 
 ## 후보 밖 생성률 — 설계 주장의 실측
 
@@ -341,6 +373,9 @@ python spark/verify_reproducibility.py compare \
 - [ADR-0007](docs/adr/0007-idempotent-reload.md) 저장소별 재적재 방식
 - [ADR-0008](docs/adr/0008-skew-not-mitigated.md) 스큐 대응 미적용
 - [ADR-0010](docs/adr/0010-reproducibility-scope.md) 재현성 주장의 범위 — 단계별로 분리
+- [ADR-0011](docs/adr/0011-query-graphrag-langgraph.md) 질의형 GraphRAG: 조건을 그래프 어휘에 묶고 검증 실패는 재생성
+- [ADR-0012](docs/adr/0012-local-llm-default.md) 기본 생성 모델을 로컬 qwen2.5:7b 로 (폐쇄망 전제)
+- [ADR-0013](docs/adr/0013-mcp-server.md) 그래프와 검증 규칙을 MCP 도구로 공개
 
 ## 별도 실험: 키워드 × 카페 메뉴 조인과 스큐 대응
 
@@ -397,9 +432,41 @@ python PostgreSQL/save_PSQL.py         # ⑨ PostgreSQL 적재
 ③~⑦ 은 OpenAI API 키가 필요하다 (`configs/.env`).
 `movefile.py` 는 산출물을 날짜 폴더(`data/YYYY-MM-DD/`)로 옮긴다.
 
+### 질의 서비스 · MCP (로컬 LLM)
+
+```bash
+# Ollama 0.5 이상 필요 (JSON 스키마 format). GPU 컨테이너 예시
+docker run -d --gpus all -v ollama:/root/.ollama -p 11434:11434 --name ollama ollama/ollama
+docker exec ollama ollama pull qwen2.5:7b
+export OLLAMA_URL=http://localhost:11434      # 호스트에 Ollama 가 둘이면 명시할 것 (ADR-0012)
+
+uvicorn app.ask_api:app --port 8001           # POST /ask {"question": "..."}
+python app/mcp_server.py                      # MCP stdio 서버 (등록 JSON 은 파일 docstring)
+```
+
+`LLM_PROVIDER=openai` 와 `LLM_MODEL=gpt-4` 로 외부 API 모델로 바꿀 수 있다.
+
 ### 측정
 
 ```bash
+# 자체 검증 (모델·Neo4j 없이)
+python GragpRAG/generate.py && python GragpRAG/ask_graph.py && python GragpRAG/eval_ask.py --selftest
+
+# MCP 프로토콜 왕복 검증 + 지연 (Neo4j 필요)
+python app/mcp_server.py --selftest
+
+# 질의 조건 추출 정확도: 규칙 vs LLM (Neo4j + Ollama)
+python GragpRAG/eval_ask.py conditions --repeat 3
+python GragpRAG/eval_ask.py conditions --repeat 3 --questions eval/ask_questions_holdout.jsonl
+
+# 질문 → 답변 전체: 배치 동작(규칙·재시도 없음) vs 질의형
+python GragpRAG/eval_ask.py e2e --repeat 3
+
+# 로컬 모델 비교 (저장된 gpt-4 원문을 기준선으로)
+python GragpRAG/eval_models.py baseline
+python GragpRAG/eval_models.py run --model qwen2.5:7b --mode structured --repeat 10
+python GragpRAG/eval_models.py table
+
 # 후보 밖 생성률 (저장된 답변으로 계산, API 호출 없음)
 python GragpRAG/eval_grounding.py
 
@@ -436,8 +503,14 @@ python spark/menu_join.py --mode plain --repeat 3
   역사적 2건이 어떤 조건에서 나왔는지 특정하지 못했다 — 모델 스냅샷 변경, 그때의 그래프
   상태, temperature 분산 중 무엇인지 가릴 데이터가 없다. 런타임 격리는 동작하므로
   유출은 막히지만, 이 실패 모드는 **감시 대상**으로만 남는다.
-- **dead letter 재처리 미구현.** 격리·집계는 구현했지만(`data/graphrag_dead_letter.jsonl`)
-  자동 재시도는 없다. 현재는 다음 회차 재생성에 의존한다.
+- ~~dead letter 재처리 미구현~~ → 질의 경로는 실패 사유를 넣어 최대 2회 재생성한다
+  (105쌍 중 10건 회복). 배치(`graphrag_aq.py`)는 여전히 격리만 한다.
+- **후보 검색이 희소한 그래프에서 조건을 통째로 잃는다.** AND 조건을 하나씩 푸는 방식이라
+  "겨울 + 음료 + 따뜻함" 처럼 걸리는 키워드가 3개 미만이면 전부 풀린다 (Season 이 걸린
+  Keyword 23/337, `따뜻함` 1개). 조건 일치 개수로 점수를 매기는 단일 쿼리로 바꿀 것.
+- **질의 평가 표본이 작다.** 35문항, 라벨 Claude 단독. 통과율 차이(p=0.065)를 판정하려면
+  문항을 늘리고 사람 라벨로 교차검증해야 한다.
+- **답변 설명문 품질은 재지 않았다.** 후보 안/밖만 판정한다.
 - ~~Neo4j 정리 수단 없음~~ → `neo4j/cleanup.py` 추가.
   회차 단위 삭제 + 고아 노드 정리. 전체 삭제는 `--yes` 확인이 필요하다.
 - **정제 정밀도 — 라벨 판정자가 사람이 아니다.** 149건 라벨링과 계산은 끝났고

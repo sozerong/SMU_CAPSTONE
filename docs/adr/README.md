@@ -9,6 +9,9 @@
 | [0007](0007-idempotent-reload.md) | 저장소별 재적재 방식 | Accepted (Neo4j 정리 수단 미구현) |
 | [0008](0008-skew-not-mitigated.md) | 스큐 대응 미적용 | Accepted |
 | [0010](0010-reproducibility-scope.md) | 재현성 주장의 범위 — 단계별로 분리 | Accepted |
+| [0011](0011-query-graphrag-langgraph.md) | 질의형 GraphRAG (LangGraph): 조건을 그래프 어휘에 묶고 검증 실패는 재생성 | Accepted |
+| [0012](0012-local-llm-default.md) | 기본 생성 모델을 로컬 qwen2.5:7b 로 (폐쇄망 전제) | Accepted |
+| [0013](0013-mcp-server.md) | 그래프와 검증 규칙을 MCP 도구로 공개 | Accepted |
 
 번호 0001~0005, 0009 는 Illo-on 저장소의 `docs/adr` 에 있습니다.
 그래서 0008 다음 번호가 0010 입니다.
