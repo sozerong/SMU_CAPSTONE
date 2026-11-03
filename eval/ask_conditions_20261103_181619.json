@@ -1,0 +1,1302 @@
+{
+  "measured_at": "20261103_181619",
+  "annotator": "claude",
+  "questions": 15,
+  "llm_repeat": 3,
+  "question_file": "ask_questions_holdout.jsonl",
+  "model": "qwen2.5:7b",
+  "temperature": 0.3,
+  "vocab_sizes": {
+    "tags": 40,
+    "seasons": 4,
+    "categories": 4
+  },
+  "rule": {
+    "n": 15,
+    "failed_calls": 0,
+    "use_ingredient": {
+      "k": 15,
+      "rate": 1.0
+    },
+    "tags": {
+      "k": 5,
+      "rate": 0.333
+    },
+    "season": {
+      "k": 13,
+      "rate": 0.867
+    },
+    "category": {
+      "k": 4,
+      "rate": 0.267
+    },
+    "all": {
+      "k": 3,
+      "rate": 0.2
+    }
+  },
+  "llm": {
+    "n": 45,
+    "failed_calls": 0,
+    "use_ingredient": {
+      "k": 45,
+      "rate": 1.0
+    },
+    "tags": {
+      "k": 39,
+      "rate": 0.867
+    },
+    "season": {
+      "k": 45,
+      "rate": 1.0
+    },
+    "category": {
+      "k": 42,
+      "rate": 0.933
+    },
+    "all": {
+      "k": 36,
+      "rate": 0.8
+    }
+  },
+  "rule_out_of_vocab_tags": [],
+  "llm_latency_s": {
+    "p50": 0.534748800098896,
+    "p95": 0.6904305000789464
+  },
+  "rows": [
+    {
+      "question": "새콤한 과일 음료",
+      "src": "rule",
+      "rep": 0,
+      "pred": {
+        "use_ingredient": false,
+        "tags": [],
+        "season": null,
+        "category": null
+      },
+      "score": {
+        "use_ingredient": true,
+        "tags": false,
+        "season": true,
+        "category": false,
+        "all": false
+      },
+      "out_of_vocab_tags": []
+    },
+    {
+      "question": "새콤한 과일 음료",
+      "src": "llm",
+      "rep": 0,
+      "pred": {
+        "use_ingredient": false,
+        "tags": [
+          "상큼함",
+          "신선함"
+        ],
+        "season": null,
+        "category": "음료"
+      },
+      "latency_s": 0.7426763998810202,
+      "score": {
+        "use_ingredient": true,
+        "tags": true,
+        "season": true,
+        "category": true,
+        "all": true
+      }
+    },
+    {
+      "question": "새콤한 과일 음료",
+      "src": "llm",
+      "rep": 1,
+      "pred": {
+        "use_ingredient": false,
+        "tags": [
+          "상큼함",
+          "신맛"
+        ],
+        "season": null,
+        "category": "음료"
+      },
+      "latency_s": 0.46702959993854165,
+      "score": {
+        "use_ingredient": true,
+        "tags": true,
+        "season": true,
+        "category": true,
+        "all": true
+      }
+    },
+    {
+      "question": "새콤한 과일 음료",
+      "src": "llm",
+      "rep": 2,
+      "pred": {
+        "use_ingredient": false,
+        "tags": [
+          "신맛",
+          "상큼함"
+        ],
+        "season": null,
+        "category": "음료"
+      },
+      "latency_s": 0.5238483999855816,
+      "score": {
+        "use_ingredient": true,
+        "tags": true,
+        "season": true,
+        "category": true,
+        "all": true
+      }
+    },
+    {
+      "question": "짭짤한 빵",
+      "src": "rule",
+      "rep": 0,
+      "pred": {
+        "use_ingredient": false,
+        "tags": [],
+        "season": null,
+        "category": null
+      },
+      "score": {
+        "use_ingredient": true,
+        "tags": false,
+        "season": true,
+        "category": false,
+        "all": false
+      },
+      "out_of_vocab_tags": []
+    },
+    {
+      "question": "짭짤한 빵",
+      "src": "llm",
+      "rep": 0,
+      "pred": {
+        "use_ingredient": false,
+        "tags": [
+          "매콤함",
+          "달콤한"
+        ],
+        "season": null,
+        "category": "베이커리"
+      },
+      "latency_s": 0.5552486998494714,
+      "score": {
+        "use_ingredient": true,
+        "tags": false,
+        "season": true,
+        "category": true,
+        "all": false
+      }
+    },
+    {
+      "question": "짭짤한 빵",
+      "src": "llm",
+      "rep": 1,
+      "pred": {
+        "use_ingredient": false,
+        "tags": [
+          "매콤함",
+          "달콤한"
+        ],
+        "season": null,
+        "category": "베이커리"
+      },
+      "latency_s": 0.5776599999517202,
+      "score": {
+        "use_ingredient": true,
+        "tags": false,
+        "season": true,
+        "category": true,
+        "all": false
+      }
+    },
+    {
+      "question": "짭짤한 빵",
+      "src": "llm",
+      "rep": 2,
+      "pred": {
+        "use_ingredient": false,
+        "tags": [
+          "매콤함",
+          "달콤함"
+        ],
+        "season": null,
+        "category": "베이커리"
+      },
+      "latency_s": 0.5876577999442816,
+      "score": {
+        "use_ingredient": true,
+        "tags": false,
+        "season": true,
+        "category": true,
+        "all": false
+      }
+    },
+    {
+      "question": "커피 향이 진한 음료",
+      "src": "rule",
+      "rep": 0,
+      "pred": {
+        "use_ingredient": false,
+        "tags": [],
+        "season": null,
+        "category": null
+      },
+      "score": {
+        "use_ingredient": true,
+        "tags": false,
+        "season": true,
+        "category": false,
+        "all": false
+      },
+      "out_of_vocab_tags": []
+    },
+    {
+      "question": "커피 향이 진한 음료",
+      "src": "llm",
+      "rep": 0,
+      "pred": {
+        "use_ingredient": false,
+        "tags": [
+          "커피향",
+          "진한"
+        ],
+        "season": null,
+        "category": "음료"
+      },
+      "latency_s": 0.570959199918434,
+      "score": {
+        "use_ingredient": true,
+        "tags": true,
+        "season": true,
+        "category": true,
+        "all": true
+      }
+    },
+    {
+      "question": "커피 향이 진한 음료",
+      "src": "llm",
+      "rep": 1,
+      "pred": {
+        "use_ingredient": false,
+        "tags": [
+          "커피향",
+          "진한"
+        ],
+        "season": null,
+        "category": "음료"
+      },
+      "latency_s": 0.5514163998886943,
+      "score": {
+        "use_ingredient": true,
+        "tags": true,
+        "season": true,
+        "category": true,
+        "all": true
+      }
+    },
+    {
+      "question": "커피 향이 진한 음료",
+      "src": "llm",
+      "rep": 2,
+      "pred": {
+        "use_ingredient": false,
+        "tags": [
+          "커피향",
+          "진한"
+        ],
+        "season": null,
+        "category": "음료"
+      },
+      "latency_s": 0.5704204000066966,
+      "score": {
+        "use_ingredient": true,
+        "tags": true,
+        "season": true,
+        "category": true,
+        "all": true
+      }
+    },
+    {
+      "question": "녹차 맛 디저트",
+      "src": "rule",
+      "rep": 0,
+      "pred": {
+        "use_ingredient": false,
+        "tags": [],
+        "season": null,
+        "category": null
+      },
+      "score": {
+        "use_ingredient": true,
+        "tags": false,
+        "season": true,
+        "category": false,
+        "all": false
+      },
+      "out_of_vocab_tags": []
+    },
+    {
+      "question": "녹차 맛 디저트",
+      "src": "llm",
+      "rep": 0,
+      "pred": {
+        "use_ingredient": false,
+        "tags": [
+          "녹차",
+          "신선함"
+        ],
+        "season": null,
+        "category": "디저트"
+      },
+      "latency_s": 0.5526624999474734,
+      "score": {
+        "use_ingredient": true,
+        "tags": true,
+        "season": true,
+        "category": true,
+        "all": true
+      }
+    },
+    {
+      "question": "녹차 맛 디저트",
+      "src": "llm",
+      "rep": 1,
+      "pred": {
+        "use_ingredient": false,
+        "tags": [
+          "녹차",
+          "신선함"
+        ],
+        "season": null,
+        "category": "디저트"
+      },
+      "latency_s": 0.5415175999514759,
+      "score": {
+        "use_ingredient": true,
+        "tags": true,
+        "season": true,
+        "category": true,
+        "all": true
+      }
+    },
+    {
+      "question": "녹차 맛 디저트",
+      "src": "llm",
+      "rep": 2,
+      "pred": {
+        "use_ingredient": false,
+        "tags": [
+          "녹차",
+          "신선함"
+        ],
+        "season": null,
+        "category": "디저트"
+      },
+      "latency_s": 0.5332723001483828,
+      "score": {
+        "use_ingredient": true,
+        "tags": true,
+        "season": true,
+        "category": true,
+        "all": true
+      }
+    },
+    {
+      "question": "치즈 풍미 가득한 베이커리",
+      "src": "rule",
+      "rep": 0,
+      "pred": {
+        "use_ingredient": false,
+        "tags": [],
+        "season": null,
+        "category": null
+      },
+      "score": {
+        "use_ingredient": true,
+        "tags": false,
+        "season": true,
+        "category": false,
+        "all": false
+      },
+      "out_of_vocab_tags": []
+    },
+    {
+      "question": "치즈 풍미 가득한 베이커리",
+      "src": "llm",
+      "rep": 0,
+      "pred": {
+        "use_ingredient": false,
+        "tags": [
+          "치즈 풍미",
+          "부드러움"
+        ],
+        "season": null,
+        "category": "베이커리"
+      },
+      "latency_s": 0.6022763000801206,
+      "score": {
+        "use_ingredient": true,
+        "tags": true,
+        "season": true,
+        "category": true,
+        "all": true
+      }
+    },
+    {
+      "question": "치즈 풍미 가득한 베이커리",
+      "src": "llm",
+      "rep": 1,
+      "pred": {
+        "use_ingredient": false,
+        "tags": [
+          "치즈 풍미",
+          "부드러움"
+        ],
+        "season": null,
+        "category": "베이커리"
+      },
+      "latency_s": 0.6048421999439597,
+      "score": {
+        "use_ingredient": true,
+        "tags": true,
+        "season": true,
+        "category": true,
+        "all": true
+      }
+    },
+    {
+      "question": "치즈 풍미 가득한 베이커리",
+      "src": "llm",
+      "rep": 2,
+      "pred": {
+        "use_ingredient": false,
+        "tags": [
+          "치즈 풍미",
+          "부드러움"
+        ],
+        "season": null,
+        "category": "베이커리"
+      },
+      "latency_s": 0.5984604000113904,
+      "score": {
+        "use_ingredient": true,
+        "tags": true,
+        "season": true,
+        "category": true,
+        "all": true
+      }
+    },
+    {
+      "question": "봄에 팔기 좋은 음료",
+      "src": "rule",
+      "rep": 0,
+      "pred": {
+        "use_ingredient": false,
+        "tags": [],
+        "season": null,
+        "category": null
+      },
+      "score": {
+        "use_ingredient": true,
+        "tags": true,
+        "season": false,
+        "category": false,
+        "all": false
+      },
+      "out_of_vocab_tags": []
+    },
+    {
+      "question": "봄에 팔기 좋은 음료",
+      "src": "llm",
+      "rep": 0,
+      "pred": {
+        "use_ingredient": false,
+        "tags": [],
+        "season": "봄",
+        "category": "음료"
+      },
+      "latency_s": 0.4492818000726402,
+      "score": {
+        "use_ingredient": true,
+        "tags": true,
+        "season": true,
+        "category": true,
+        "all": true
+      }
+    },
+    {
+      "question": "봄에 팔기 좋은 음료",
+      "src": "llm",
+      "rep": 1,
+      "pred": {
+        "use_ingredient": false,
+        "tags": [],
+        "season": "봄",
+        "category": "음료"
+      },
+      "latency_s": 0.4407080998644233,
+      "score": {
+        "use_ingredient": true,
+        "tags": true,
+        "season": true,
+        "category": true,
+        "all": true
+      }
+    },
+    {
+      "question": "봄에 팔기 좋은 음료",
+      "src": "llm",
+      "rep": 2,
+      "pred": {
+        "use_ingredient": false,
+        "tags": [],
+        "season": "봄",
+        "category": "음료"
+      },
+      "latency_s": 0.4483370000962168,
+      "score": {
+        "use_ingredient": true,
+        "tags": true,
+        "season": true,
+        "category": true,
+        "all": true
+      }
+    },
+    {
+      "question": "케이크 만들 때 쓸 재료",
+      "src": "rule",
+      "rep": 0,
+      "pred": {
+        "use_ingredient": true,
+        "tags": [],
+        "season": null,
+        "category": null
+      },
+      "score": {
+        "use_ingredient": true,
+        "tags": true,
+        "season": true,
+        "category": true,
+        "all": true
+      },
+      "out_of_vocab_tags": []
+    },
+    {
+      "question": "케이크 만들 때 쓸 재료",
+      "src": "llm",
+      "rep": 0,
+      "pred": {
+        "use_ingredient": true,
+        "tags": [],
+        "season": null,
+        "category": null
+      },
+      "latency_s": 0.4023839000146836,
+      "score": {
+        "use_ingredient": true,
+        "tags": true,
+        "season": true,
+        "category": true,
+        "all": true
+      }
+    },
+    {
+      "question": "케이크 만들 때 쓸 재료",
+      "src": "llm",
+      "rep": 1,
+      "pred": {
+        "use_ingredient": true,
+        "tags": [],
+        "season": null,
+        "category": null
+      },
+      "latency_s": 0.4096295000053942,
+      "score": {
+        "use_ingredient": true,
+        "tags": true,
+        "season": true,
+        "category": true,
+        "all": true
+      }
+    },
+    {
+      "question": "케이크 만들 때 쓸 재료",
+      "src": "llm",
+      "rep": 2,
+      "pred": {
+        "use_ingredient": true,
+        "tags": [],
+        "season": null,
+        "category": null
+      },
+      "latency_s": 0.4025067000184208,
+      "score": {
+        "use_ingredient": true,
+        "tags": true,
+        "season": true,
+        "category": true,
+        "all": true
+      }
+    },
+    {
+      "question": "가을 분위기 디저트",
+      "src": "rule",
+      "rep": 0,
+      "pred": {
+        "use_ingredient": false,
+        "tags": [],
+        "season": null,
+        "category": null
+      },
+      "score": {
+        "use_ingredient": true,
+        "tags": true,
+        "season": false,
+        "category": false,
+        "all": false
+      },
+      "out_of_vocab_tags": []
+    },
+    {
+      "question": "가을 분위기 디저트",
+      "src": "llm",
+      "rep": 0,
+      "pred": {
+        "use_ingredient": false,
+        "tags": [
+          "가벼움",
+          "따뜻함",
+          "다채로움"
+        ],
+        "season": "가을",
+        "category": "디저트"
+      },
+      "latency_s": 0.7251208999659866,
+      "score": {
+        "use_ingredient": true,
+        "tags": false,
+        "season": true,
+        "category": true,
+        "all": false
+      }
+    },
+    {
+      "question": "가을 분위기 디저트",
+      "src": "llm",
+      "rep": 1,
+      "pred": {
+        "use_ingredient": false,
+        "tags": [
+          "달콤함",
+          "진한맛",
+          "따뜻함"
+        ],
+        "season": "가을",
+        "category": "디저트"
+      },
+      "latency_s": 0.6789540001191199,
+      "score": {
+        "use_ingredient": true,
+        "tags": false,
+        "season": true,
+        "category": true,
+        "all": false
+      }
+    },
+    {
+      "question": "가을 분위기 디저트",
+      "src": "llm",
+      "rep": 2,
+      "pred": {
+        "use_ingredient": false,
+        "tags": [
+          "가벼움",
+          "따뜻함",
+          "다채로움"
+        ],
+        "season": "가을",
+        "category": "디저트"
+      },
+      "latency_s": 0.6904305000789464,
+      "score": {
+        "use_ingredient": true,
+        "tags": false,
+        "season": true,
+        "category": true,
+        "all": false
+      }
+    },
+    {
+      "question": "담백한 음식",
+      "src": "rule",
+      "rep": 0,
+      "pred": {
+        "use_ingredient": false,
+        "tags": [],
+        "season": null,
+        "category": null
+      },
+      "score": {
+        "use_ingredient": true,
+        "tags": false,
+        "season": true,
+        "category": false,
+        "all": false
+      },
+      "out_of_vocab_tags": []
+    },
+    {
+      "question": "담백한 음식",
+      "src": "llm",
+      "rep": 0,
+      "pred": {
+        "use_ingredient": false,
+        "tags": [
+          "담백함"
+        ],
+        "season": null,
+        "category": null
+      },
+      "latency_s": 0.47672369983047247,
+      "score": {
+        "use_ingredient": true,
+        "tags": true,
+        "season": true,
+        "category": false,
+        "all": false
+      }
+    },
+    {
+      "question": "담백한 음식",
+      "src": "llm",
+      "rep": 1,
+      "pred": {
+        "use_ingredient": false,
+        "tags": [
+          "담백함"
+        ],
+        "season": null,
+        "category": null
+      },
+      "latency_s": 0.46250489982776344,
+      "score": {
+        "use_ingredient": true,
+        "tags": true,
+        "season": true,
+        "category": false,
+        "all": false
+      }
+    },
+    {
+      "question": "담백한 음식",
+      "src": "llm",
+      "rep": 2,
+      "pred": {
+        "use_ingredient": false,
+        "tags": [
+          "담백함"
+        ],
+        "season": null,
+        "category": null
+      },
+      "latency_s": 0.47041979990899563,
+      "score": {
+        "use_ingredient": true,
+        "tags": true,
+        "season": true,
+        "category": false,
+        "all": false
+      }
+    },
+    {
+      "question": "바삭바삭한 간식",
+      "src": "rule",
+      "rep": 0,
+      "pred": {
+        "use_ingredient": false,
+        "tags": [],
+        "season": null,
+        "category": null
+      },
+      "score": {
+        "use_ingredient": true,
+        "tags": false,
+        "season": true,
+        "category": true,
+        "all": false
+      },
+      "out_of_vocab_tags": []
+    },
+    {
+      "question": "바삭바삭한 간식",
+      "src": "llm",
+      "rep": 0,
+      "pred": {
+        "use_ingredient": false,
+        "tags": [
+          "바삭함"
+        ],
+        "season": null,
+        "category": null
+      },
+      "latency_s": 0.47695189993828535,
+      "score": {
+        "use_ingredient": true,
+        "tags": true,
+        "season": true,
+        "category": true,
+        "all": true
+      }
+    },
+    {
+      "question": "바삭바삭한 간식",
+      "src": "llm",
+      "rep": 1,
+      "pred": {
+        "use_ingredient": false,
+        "tags": [
+          "바삭함"
+        ],
+        "season": null,
+        "category": null
+      },
+      "latency_s": 0.4580729000736028,
+      "score": {
+        "use_ingredient": true,
+        "tags": true,
+        "season": true,
+        "category": true,
+        "all": true
+      }
+    },
+    {
+      "question": "바삭바삭한 간식",
+      "src": "llm",
+      "rep": 2,
+      "pred": {
+        "use_ingredient": false,
+        "tags": [
+          "바삭함"
+        ],
+        "season": null,
+        "category": null
+      },
+      "latency_s": 0.45860620005987585,
+      "score": {
+        "use_ingredient": true,
+        "tags": true,
+        "season": true,
+        "category": true,
+        "all": true
+      }
+    },
+    {
+      "question": "요거트 향 나는 디저트",
+      "src": "rule",
+      "rep": 0,
+      "pred": {
+        "use_ingredient": false,
+        "tags": [],
+        "season": null,
+        "category": null
+      },
+      "score": {
+        "use_ingredient": true,
+        "tags": false,
+        "season": true,
+        "category": false,
+        "all": false
+      },
+      "out_of_vocab_tags": []
+    },
+    {
+      "question": "요거트 향 나는 디저트",
+      "src": "llm",
+      "rep": 0,
+      "pred": {
+        "use_ingredient": false,
+        "tags": [
+          "요거트 향"
+        ],
+        "season": null,
+        "category": "디저트"
+      },
+      "latency_s": 0.5415982999838889,
+      "score": {
+        "use_ingredient": true,
+        "tags": true,
+        "season": true,
+        "category": true,
+        "all": true
+      }
+    },
+    {
+      "question": "요거트 향 나는 디저트",
+      "src": "llm",
+      "rep": 1,
+      "pred": {
+        "use_ingredient": false,
+        "tags": [
+          "요거트 향"
+        ],
+        "season": null,
+        "category": "디저트"
+      },
+      "latency_s": 0.5334010999649763,
+      "score": {
+        "use_ingredient": true,
+        "tags": true,
+        "season": true,
+        "category": true,
+        "all": true
+      }
+    },
+    {
+      "question": "요거트 향 나는 디저트",
+      "src": "llm",
+      "rep": 2,
+      "pred": {
+        "use_ingredient": false,
+        "tags": [
+          "요거트 향"
+        ],
+        "season": null,
+        "category": "디저트"
+      },
+      "latency_s": 0.5404715999029577,
+      "score": {
+        "use_ingredient": true,
+        "tags": true,
+        "season": true,
+        "category": true,
+        "all": true
+      }
+    },
+    {
+      "question": "음료에 넣을 재료",
+      "src": "rule",
+      "rep": 0,
+      "pred": {
+        "use_ingredient": true,
+        "tags": [],
+        "season": null,
+        "category": null
+      },
+      "score": {
+        "use_ingredient": true,
+        "tags": true,
+        "season": true,
+        "category": true,
+        "all": true
+      },
+      "out_of_vocab_tags": []
+    },
+    {
+      "question": "음료에 넣을 재료",
+      "src": "llm",
+      "rep": 0,
+      "pred": {
+        "use_ingredient": true,
+        "tags": [],
+        "season": null,
+        "category": null
+      },
+      "latency_s": 0.4132000000681728,
+      "score": {
+        "use_ingredient": true,
+        "tags": true,
+        "season": true,
+        "category": true,
+        "all": true
+      }
+    },
+    {
+      "question": "음료에 넣을 재료",
+      "src": "llm",
+      "rep": 1,
+      "pred": {
+        "use_ingredient": true,
+        "tags": [],
+        "season": null,
+        "category": null
+      },
+      "latency_s": 0.4040953000076115,
+      "score": {
+        "use_ingredient": true,
+        "tags": true,
+        "season": true,
+        "category": true,
+        "all": true
+      }
+    },
+    {
+      "question": "음료에 넣을 재료",
+      "src": "llm",
+      "rep": 2,
+      "pred": {
+        "use_ingredient": true,
+        "tags": [],
+        "season": null,
+        "category": null
+      },
+      "latency_s": 0.34790139994584024,
+      "score": {
+        "use_ingredient": true,
+        "tags": true,
+        "season": true,
+        "category": true,
+        "all": true
+      }
+    },
+    {
+      "question": "여름 시즌 재료",
+      "src": "rule",
+      "rep": 0,
+      "pred": {
+        "use_ingredient": true,
+        "tags": [],
+        "season": null,
+        "category": null
+      },
+      "score": {
+        "use_ingredient": true,
+        "tags": true,
+        "season": true,
+        "category": true,
+        "all": true
+      },
+      "out_of_vocab_tags": []
+    },
+    {
+      "question": "여름 시즌 재료",
+      "src": "llm",
+      "rep": 0,
+      "pred": {
+        "use_ingredient": true,
+        "tags": [],
+        "season": "여름",
+        "category": null
+      },
+      "latency_s": 0.43642379995435476,
+      "score": {
+        "use_ingredient": true,
+        "tags": true,
+        "season": true,
+        "category": true,
+        "all": true
+      }
+    },
+    {
+      "question": "여름 시즌 재료",
+      "src": "llm",
+      "rep": 1,
+      "pred": {
+        "use_ingredient": true,
+        "tags": [],
+        "season": "여름",
+        "category": null
+      },
+      "latency_s": 0.4326833998784423,
+      "score": {
+        "use_ingredient": true,
+        "tags": true,
+        "season": true,
+        "category": true,
+        "all": true
+      }
+    },
+    {
+      "question": "여름 시즌 재료",
+      "src": "llm",
+      "rep": 2,
+      "pred": {
+        "use_ingredient": true,
+        "tags": [],
+        "season": "여름",
+        "category": null
+      },
+      "latency_s": 0.4310971999075264,
+      "score": {
+        "use_ingredient": true,
+        "tags": true,
+        "season": true,
+        "category": true,
+        "all": true
+      }
+    },
+    {
+      "question": "쫀득쫀득한 떡 디저트",
+      "src": "rule",
+      "rep": 0,
+      "pred": {
+        "use_ingredient": false,
+        "tags": [],
+        "season": null,
+        "category": null
+      },
+      "score": {
+        "use_ingredient": true,
+        "tags": false,
+        "season": true,
+        "category": false,
+        "all": false
+      },
+      "out_of_vocab_tags": []
+    },
+    {
+      "question": "쫀득쫀득한 떡 디저트",
+      "src": "llm",
+      "rep": 0,
+      "pred": {
+        "use_ingredient": false,
+        "tags": [
+          "쫀득함",
+          "달콤한"
+        ],
+        "season": null,
+        "category": "디저트"
+      },
+      "latency_s": 0.5839897999539971,
+      "score": {
+        "use_ingredient": true,
+        "tags": true,
+        "season": true,
+        "category": true,
+        "all": true
+      }
+    },
+    {
+      "question": "쫀득쫀득한 떡 디저트",
+      "src": "llm",
+      "rep": 1,
+      "pred": {
+        "use_ingredient": false,
+        "tags": [
+          "쫀득함",
+          "달콤한"
+        ],
+        "season": null,
+        "category": "디저트"
+      },
+      "latency_s": 0.6162972000893205,
+      "score": {
+        "use_ingredient": true,
+        "tags": true,
+        "season": true,
+        "category": true,
+        "all": true
+      }
+    },
+    {
+      "question": "쫀득쫀득한 떡 디저트",
+      "src": "llm",
+      "rep": 2,
+      "pred": {
+        "use_ingredient": false,
+        "tags": [
+          "쫀득함",
+          "달콤한"
+        ],
+        "season": null,
+        "category": "디저트"
+      },
+      "latency_s": 0.5874783000908792,
+      "score": {
+        "use_ingredient": true,
+        "tags": true,
+        "season": true,
+        "category": true,
+        "all": true
+      }
+    },
+    {
+      "question": "향긋한 차 음료",
+      "src": "rule",
+      "rep": 0,
+      "pred": {
+        "use_ingredient": false,
+        "tags": [],
+        "season": null,
+        "category": null
+      },
+      "score": {
+        "use_ingredient": true,
+        "tags": false,
+        "season": true,
+        "category": false,
+        "all": false
+      },
+      "out_of_vocab_tags": []
+    },
+    {
+      "question": "향긋한 차 음료",
+      "src": "llm",
+      "rep": 0,
+      "pred": {
+        "use_ingredient": false,
+        "tags": [
+          "향긋함",
+          "녹차"
+        ],
+        "season": null,
+        "category": "음료"
+      },
+      "latency_s": 0.5364664001390338,
+      "score": {
+        "use_ingredient": true,
+        "tags": true,
+        "season": true,
+        "category": true,
+        "all": true
+      }
+    },
+    {
+      "question": "향긋한 차 음료",
+      "src": "llm",
+      "rep": 1,
+      "pred": {
+        "use_ingredient": false,
+        "tags": [
+          "향긋함",
+          "녹차"
+        ],
+        "season": null,
+        "category": "음료"
+      },
+      "latency_s": 0.5365810000803322,
+      "score": {
+        "use_ingredient": true,
+        "tags": true,
+        "season": true,
+        "category": true,
+        "all": true
+      }
+    },
+    {
+      "question": "향긋한 차 음료",
+      "src": "llm",
+      "rep": 2,
+      "pred": {
+        "use_ingredient": false,
+        "tags": [
+          "향긋함",
+          "녹차"
+        ],
+        "season": null,
+        "category": "음료"
+      },
+      "latency_s": 0.534748800098896,
+      "score": {
+        "use_ingredient": true,
+        "tags": true,
+        "season": true,
+        "category": true,
+        "all": true
+      }
+    }
+  ]
+}

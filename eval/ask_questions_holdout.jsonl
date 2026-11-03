@@ -1,0 +1,15 @@
+{"question": "새콤한 과일 음료", "use_ingredient": false, "tags_ok": ["상큼함", "신맛", "신선함"], "season_ok": [null], "category_ok": ["음료"]}
+{"question": "짭짤한 빵", "use_ingredient": false, "tags_ok": ["소금맛"], "season_ok": [null], "category_ok": ["베이커리"]}
+{"question": "커피 향이 진한 음료", "use_ingredient": false, "tags_ok": ["커피향", "진한", "진한맛"], "season_ok": [null], "category_ok": ["음료"]}
+{"question": "녹차 맛 디저트", "use_ingredient": false, "tags_ok": ["녹차"], "season_ok": [null], "category_ok": ["디저트"]}
+{"question": "치즈 풍미 가득한 베이커리", "use_ingredient": false, "tags_ok": ["치즈 풍미", "치즈", "풍부함"], "season_ok": [null], "category_ok": ["베이커리"]}
+{"question": "봄에 팔기 좋은 음료", "use_ingredient": false, "tags_ok": [], "season_ok": ["봄"], "category_ok": ["음료"]}
+{"question": "케이크 만들 때 쓸 재료", "use_ingredient": true, "tags_ok": [], "season_ok": [null], "category_ok": [null, "디저트"]}
+{"question": "가을 분위기 디저트", "use_ingredient": false, "tags_ok": [], "season_ok": ["가을"], "category_ok": ["디저트"]}
+{"question": "담백한 음식", "use_ingredient": false, "tags_ok": ["담백함"], "season_ok": [null], "category_ok": ["음식"]}
+{"question": "바삭바삭한 간식", "use_ingredient": false, "tags_ok": ["바삭함"], "season_ok": [null], "category_ok": [null, "디저트", "베이커리"]}
+{"question": "요거트 향 나는 디저트", "use_ingredient": false, "tags_ok": ["요거트 향"], "season_ok": [null], "category_ok": ["디저트"]}
+{"question": "음료에 넣을 재료", "use_ingredient": true, "tags_ok": [], "season_ok": [null], "category_ok": [null, "음료"]}
+{"question": "여름 시즌 재료", "use_ingredient": true, "tags_ok": [], "season_ok": [null, "여름"], "category_ok": [null]}
+{"question": "쫀득쫀득한 떡 디저트", "use_ingredient": false, "tags_ok": ["쫀득함", "쫄깃함"], "season_ok": [null], "category_ok": ["디저트"]}
+{"question": "향긋한 차 음료", "use_ingredient": false, "tags_ok": ["향긋함"], "season_ok": [null], "category_ok": ["음료"]}

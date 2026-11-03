@@ -1,0 +1,20 @@
+{"question": "최근 유행하는 재료", "use_ingredient": true, "tags_ok": [], "season_ok": [null], "category_ok": [null]}
+{"question": "SNS에서 핫한 메뉴", "use_ingredient": false, "tags_ok": [], "season_ok": [null], "category_ok": [null]}
+{"question": "카페 신메뉴 추천", "use_ingredient": false, "tags_ok": [], "season_ok": [null], "category_ok": [null, "디저트", "음료"]}
+{"question": "달콤한 메뉴가 필요할 때", "use_ingredient": false, "tags_ok": ["달콤함", "달콤한"], "season_ok": [null], "category_ok": [null]}
+{"question": "비주얼이 예쁜 메뉴", "use_ingredient": false, "tags_ok": [], "season_ok": [null], "category_ok": [null]}
+{"question": "계절 한정 디저트", "use_ingredient": false, "tags_ok": [], "season_ok": [null, "봄", "여름", "가을", "겨울"], "category_ok": ["디저트"]}
+{"question": "여름에 시원하게 마실 음료", "use_ingredient": false, "tags_ok": ["시원함"], "season_ok": ["여름"], "category_ok": ["음료"]}
+{"question": "달달한 디저트 추천해줘", "use_ingredient": false, "tags_ok": ["달콤함", "달콤한"], "season_ok": [null], "category_ok": ["디저트"]}
+{"question": "겨울에 어울리는 따뜻한 음료", "use_ingredient": false, "tags_ok": ["따뜻함"], "season_ok": ["겨울"], "category_ok": ["음료"]}
+{"question": "상큼한 봄 디저트", "use_ingredient": false, "tags_ok": ["상큼함", "신선함"], "season_ok": ["봄"], "category_ok": ["디저트"]}
+{"question": "고소한 베이커리 메뉴", "use_ingredient": false, "tags_ok": ["고소함"], "season_ok": [null], "category_ok": ["베이커리"]}
+{"question": "쫄깃한 식감의 디저트", "use_ingredient": false, "tags_ok": ["쫄깃함", "쫀득함"], "season_ok": [null], "category_ok": ["디저트"]}
+{"question": "진한 초콜릿 디저트", "use_ingredient": false, "tags_ok": ["진한", "진한맛", "초콜릿"], "season_ok": [null], "category_ok": ["디저트"]}
+{"question": "가을 신메뉴에 쓸 재료", "use_ingredient": true, "tags_ok": [], "season_ok": [null, "가을"], "category_ok": [null]}
+{"question": "바삭한 빵 메뉴", "use_ingredient": false, "tags_ok": ["바삭함"], "season_ok": [null], "category_ok": ["베이커리"]}
+{"question": "부드러운 크림 디저트", "use_ingredient": false, "tags_ok": ["부드러움", "부드러운", "크림"], "season_ok": [null], "category_ok": ["디저트"]}
+{"question": "요즘 뜨는 음료", "use_ingredient": false, "tags_ok": [], "season_ok": [null], "category_ok": ["음료"]}
+{"question": "건강한 느낌의 메뉴", "use_ingredient": false, "tags_ok": ["건강함", "가벼움", "담백함"], "season_ok": [null], "category_ok": [null]}
+{"question": "선물하기 좋은 디저트", "use_ingredient": false, "tags_ok": ["선물", "고급스러운", "특별함"], "season_ok": [null], "category_ok": ["디저트"]}
+{"question": "디저트에 넣을 재료 추천", "use_ingredient": true, "tags_ok": [], "season_ok": [null], "category_ok": [null, "디저트"]}
