@@ -1,0 +1,392 @@
+{
+  "source": "eval/grounding_ab_raw_*.jsonl (저장된 원문 재채점, API 호출 없음)",
+  "temperature": 0.3,
+  "unique_pairs": 9,
+  "models": {
+    "gpt-4o-mini": {
+      "files": [
+        "grounding_ab_raw_20260922_225151.jsonl"
+      ],
+      "rows_per_pair": {
+        "최근 유행하는 재료 | 찰떡": 4,
+        "SNS에서 핫한 메뉴 | 소금 빵": 8,
+        "카페 신메뉴 추천 | 그릭 요거트": 8,
+        "달콤한 메뉴가 필요할 때 | 소금 빵": 8,
+        "비주얼이 예쁜 메뉴 | 소금 빵": 8,
+        "계절 한정 디저트 | 딸기 케이크": 8,
+        "최근 유행하는 재료 | 딸기": 4
+      },
+      "all": {
+        "answers": 48,
+        "reasons": {
+          "ok": 48
+        },
+        "schema_fail": {
+          "k": 0,
+          "n": 48,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.0741
+          ]
+        },
+        "call_error": 0,
+        "rejected": {
+          "k": 0,
+          "n": 48,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.0741
+          ]
+        },
+        "out_lenient_items": {
+          "k": 0,
+          "n": 240,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.0158
+          ]
+        },
+        "out_strict_items": {
+          "k": 9,
+          "n": 240,
+          "rate": 0.0375,
+          "ci95": [
+            0.0199,
+            0.0697
+          ]
+        },
+        "answers_with_out_lenient": {
+          "k": 0,
+          "n": 48,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.0741
+          ]
+        },
+        "items_per_answer": {
+          "mean": 5.0,
+          "min": 5,
+          "max": 5,
+          "outside_3to5": 0
+        }
+      },
+      "ingredient": {
+        "answers": 8,
+        "reasons": {
+          "ok": 8
+        },
+        "schema_fail": {
+          "k": 0,
+          "n": 8,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.3244
+          ]
+        },
+        "call_error": 0,
+        "rejected": {
+          "k": 0,
+          "n": 8,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.3244
+          ]
+        },
+        "out_lenient_items": {
+          "k": 0,
+          "n": 40,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.0876
+          ]
+        },
+        "out_strict_items": {
+          "k": 0,
+          "n": 40,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.0876
+          ]
+        },
+        "answers_with_out_lenient": {
+          "k": 0,
+          "n": 8,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.3244
+          ]
+        },
+        "items_per_answer": {
+          "mean": 5.0,
+          "min": 5,
+          "max": 5,
+          "outside_3to5": 0
+        }
+      },
+      "menu": {
+        "answers": 40,
+        "reasons": {
+          "ok": 40
+        },
+        "schema_fail": {
+          "k": 0,
+          "n": 40,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.0876
+          ]
+        },
+        "call_error": 0,
+        "rejected": {
+          "k": 0,
+          "n": 40,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.0876
+          ]
+        },
+        "out_lenient_items": {
+          "k": 0,
+          "n": 200,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.0188
+          ]
+        },
+        "out_strict_items": {
+          "k": 9,
+          "n": 200,
+          "rate": 0.045,
+          "ci95": [
+            0.0239,
+            0.0833
+          ]
+        },
+        "answers_with_out_lenient": {
+          "k": 0,
+          "n": 40,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.0876
+          ]
+        },
+        "items_per_answer": {
+          "mean": 5.0,
+          "min": 5,
+          "max": 5,
+          "outside_3to5": 0
+        }
+      }
+    },
+    "gpt-4": {
+      "files": [
+        "grounding_ab_raw_20260922_230723.jsonl",
+        "grounding_ab_raw_20260922_230956.jsonl",
+        "grounding_ab_raw_20260922_231056.jsonl",
+        "grounding_ab_raw_20260922_231216.jsonl",
+        "grounding_ab_raw_20260922_231325.jsonl",
+        "grounding_ab_raw_20260922_231435.jsonl"
+      ],
+      "rows_per_pair": {
+        "최근 유행하는 재료 | 찰떡": 10,
+        "SNS에서 핫한 메뉴 | 소금 빵": 8,
+        "카페 신메뉴 추천 | 그릭 요거트": 8,
+        "달콤한 메뉴가 필요할 때 | 소금 빵": 8,
+        "비주얼이 예쁜 메뉴 | 소금 빵": 8,
+        "계절 한정 디저트 | 딸기 케이크": 8,
+        "최근 유행하는 재료 | 딸기": 19,
+        "최근 유행하는 재료 | 고소한 국물": 3,
+        "최근 유행하는 재료 | 노스 카나 겔": 6
+      },
+      "all": {
+        "answers": 78,
+        "reasons": {
+          "ok": 77,
+          "ungrounded": 1
+        },
+        "schema_fail": {
+          "k": 0,
+          "n": 78,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.0469
+          ]
+        },
+        "call_error": 0,
+        "rejected": {
+          "k": 1,
+          "n": 78,
+          "rate": 0.01282051282051282,
+          "ci95": [
+            0.0023,
+            0.0691
+          ]
+        },
+        "out_lenient_items": {
+          "k": 1,
+          "n": 386,
+          "rate": 0.0025906735751295338,
+          "ci95": [
+            0.0005,
+            0.0145
+          ]
+        },
+        "out_strict_items": {
+          "k": 164,
+          "n": 386,
+          "rate": 0.42487046632124353,
+          "ci95": [
+            0.3765,
+            0.4747
+          ]
+        },
+        "answers_with_out_lenient": {
+          "k": 1,
+          "n": 78,
+          "rate": 0.01282051282051282,
+          "ci95": [
+            0.0023,
+            0.0691
+          ]
+        },
+        "items_per_answer": {
+          "mean": 4.95,
+          "min": 4,
+          "max": 5,
+          "outside_3to5": 0
+        }
+      },
+      "ingredient": {
+        "answers": 38,
+        "reasons": {
+          "ok": 38
+        },
+        "schema_fail": {
+          "k": 0,
+          "n": 38,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.0918
+          ]
+        },
+        "call_error": 0,
+        "rejected": {
+          "k": 0,
+          "n": 38,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.0918
+          ]
+        },
+        "out_lenient_items": {
+          "k": 0,
+          "n": 187,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.0201
+          ]
+        },
+        "out_strict_items": {
+          "k": 0,
+          "n": 187,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.0201
+          ]
+        },
+        "answers_with_out_lenient": {
+          "k": 0,
+          "n": 38,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.0918
+          ]
+        },
+        "items_per_answer": {
+          "mean": 4.92,
+          "min": 4,
+          "max": 5,
+          "outside_3to5": 0
+        }
+      },
+      "menu": {
+        "answers": 40,
+        "reasons": {
+          "ok": 39,
+          "ungrounded": 1
+        },
+        "schema_fail": {
+          "k": 0,
+          "n": 40,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.0876
+          ]
+        },
+        "call_error": 0,
+        "rejected": {
+          "k": 1,
+          "n": 40,
+          "rate": 0.025,
+          "ci95": [
+            0.0044,
+            0.1288
+          ]
+        },
+        "out_lenient_items": {
+          "k": 1,
+          "n": 199,
+          "rate": 0.005025125628140704,
+          "ci95": [
+            0.0009,
+            0.0279
+          ]
+        },
+        "out_strict_items": {
+          "k": 164,
+          "n": 199,
+          "rate": 0.8241206030150754,
+          "ci95": [
+            0.7652,
+            0.8707
+          ]
+        },
+        "answers_with_out_lenient": {
+          "k": 1,
+          "n": 40,
+          "rate": 0.025,
+          "ci95": [
+            0.0044,
+            0.1288
+          ]
+        },
+        "items_per_answer": {
+          "mean": 4.97,
+          "min": 4,
+          "max": 5,
+          "outside_3to5": 0
+        }
+      }
+    }
+  }
+}

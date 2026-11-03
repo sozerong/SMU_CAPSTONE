@@ -6,8 +6,6 @@ from datetime import datetime
 
 from neo4j import GraphDatabase
 from dotenv import load_dotenv
-from langchain_openai import ChatOpenAI
-from langchain.schema import SystemMessage, HumanMessage
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 # 후보 안/밖 판정의 단일 출처. eval_grounding.py 도 같은 모듈을 쓴다 —
@@ -16,6 +14,9 @@ from grounding import validate_answer          # noqa: E402
 # 후보 탐색 Cypher. graphrag_aq 는 import 만 해도 Neo4j·OpenAI 가 붙어서 테스트가 안 된다.
 # 후보 선정이 이 파이프라인에서 가장 틀리기 쉬운 자리라 검증 가능한 모듈로 뺐다.
 from candidates import get_keywords_by_question   # noqa: E402
+# 프롬프트·모델·구조화 출력은 질의 서비스(ask_graph)와 같은 함수를 쓴다.
+# 모델은 LLM_PROVIDER / LLM_MODEL 로 고른다 (기본 로컬 qwen2.5:7b, ADR-0012).
+from generate import generate, make_llm            # noqa: E402
 
 DEAD_LETTER_PATH = "data/graphrag_dead_letter.jsonl"
 
@@ -27,7 +28,7 @@ NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD")
 driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
 
 # ✅ LLM 초기화
-llm = ChatOpenAI(temperature=0.3, model="gpt-4")
+llm = make_llm()
 
 # ✅ 질문 목록
 questions = [
@@ -46,34 +47,11 @@ with driver.session() as session:
     for question in questions:
         keywords = session.execute_read(get_keywords_by_question, question)
 
-        # 💬 키워드 context 목록 (LLM 프롬프트 무시 방지용)
-        keyword_bullets = "\n".join(f"- {kw}" for kw in keywords)
-
-        # 🎯 LLM 프롬프트 구분
-        if "재료" in question:
-            system_prompt = (
-                f"당신은 카페 재료 기획 전문가입니다.\n"
-                f"다음은 사용 가능한 재료 키워드입니다. 이 키워드만 참고해서 '{question}'에 어울리는 재료 3~5개를 추천하세요.\n"
-                f"❗ 주어진 키워드 외의 재료를 생성하면 안 됩니다.\n\n"
-                f"{keyword_bullets}\n\n"
-                f"출력 형식: JSON 배열 [{{\"name\": \"이름\", \"description\": \"설명\"}} ...]"
-            )
-        else:
-            system_prompt = (
-                f"당신은 디저트 마케팅 전문가입니다.\n"
-                f"다음은 사용 가능한 디저트 키워드입니다. 이 키워드만 참고해서 '{question}'에 어울리는 메뉴를 3~5개 추천하세요.\n"
-                f"❗ 제공된 키워드 외 메뉴를 생성하지 마세요.\n\n"
-                f"{keyword_bullets}\n\n"
-                f"출력 형식: JSON 배열 [{{\"name\": \"이름\", \"description\": \"설명\"}} ...]"
-            )
-
-        # ✅ LLM 호출
-        system_msg = SystemMessage(content=system_prompt)
-        user_msg = HumanMessage(content=question)
-        response = llm.invoke([system_msg, user_msg])
+        # ✅ LLM 호출 (프롬프트는 generate.build_system_prompt)
+        answer = generate(llm, question, keywords)
 
         # ✅ 파싱 검증 — 실패는 버리지 않고 격리한다
-        ok, parsed_or_reason = validate_answer(response.content, keywords)
+        ok, parsed_or_reason = validate_answer(answer, keywords)
         if ok:
             results.append({
                 "question": question,
@@ -86,7 +64,7 @@ with driver.session() as session:
                 "question":    question,
                 "keywords":    keywords,
                 "reason":      parsed_or_reason,
-                "raw_response": response.content,
+                "raw_response": answer,
                 "failed_at":   datetime.now().isoformat(timespec="seconds"),
             })
             print(f"❌ 격리: {question} — {parsed_or_reason}")

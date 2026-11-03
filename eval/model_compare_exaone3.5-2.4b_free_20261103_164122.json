@@ -1,0 +1,219 @@
+{
+  "model": {
+    "url": "http://[::1]:11434",
+    "server_version": "0.40.14",
+    "tag": "exaone3.5:2.4b",
+    "digest": "13644fc3d28eaaff502f903406496cad15df31e367cb7be988c132def104ba42",
+    "details": {
+      "parent_model": "",
+      "format": "gguf",
+      "family": "exaone",
+      "families": [
+        "exaone"
+      ],
+      "parameter_size": "2.7B",
+      "quantization_level": "Q4_K_M",
+      "context_length": 32768,
+      "embedding_length": 2560,
+      "runner": "ggml"
+    }
+  },
+  "mode": "free",
+  "temperature": 0.3,
+  "repeat": 10,
+  "unique_pairs": 9,
+  "calls": 90,
+  "hardware": {
+    "cpu": "AMD Ryzen 7 7800X3D",
+    "gpu": "NVIDIA RTX 4070 SUPER 12GB",
+    "ollama_runtime": "docker ollama/ollama 0.40.14 (WSL2), OLLAMA_URL=http://[::1]:11434"
+  },
+  "measured_at": "20261103_164122",
+  "warmup_s": 1.42,
+  "raw_file": "model_compare_raw_exaone3.5-2.4b_free_20261103_164122.jsonl",
+  "all": {
+    "answers": 90,
+    "reasons": {
+      "ungrounded": 64,
+      "ok": 26
+    },
+    "schema_fail": {
+      "k": 0,
+      "n": 90,
+      "rate": 0.0,
+      "ci95": [
+        0.0,
+        0.0409
+      ]
+    },
+    "call_error": 0,
+    "rejected": {
+      "k": 64,
+      "n": 90,
+      "rate": 0.7111111111111111,
+      "ci95": [
+        0.6104,
+        0.7946
+      ]
+    },
+    "out_lenient_items": {
+      "k": 210,
+      "n": 440,
+      "rate": 0.4772727272727273,
+      "ci95": [
+        0.431,
+        0.5239
+      ]
+    },
+    "out_strict_items": {
+      "k": 423,
+      "n": 440,
+      "rate": 0.9613636363636363,
+      "ci95": [
+        0.939,
+        0.9757
+      ]
+    },
+    "answers_with_out_lenient": {
+      "k": 64,
+      "n": 90,
+      "rate": 0.7111111111111111,
+      "ci95": [
+        0.6104,
+        0.7946
+      ]
+    },
+    "items_per_answer": {
+      "mean": 4.89,
+      "min": 4,
+      "max": 5,
+      "outside_3to5": 0
+    }
+  },
+  "ingredient": {
+    "answers": 40,
+    "reasons": {
+      "ungrounded": 39,
+      "ok": 1
+    },
+    "schema_fail": {
+      "k": 0,
+      "n": 40,
+      "rate": 0.0,
+      "ci95": [
+        0.0,
+        0.0876
+      ]
+    },
+    "call_error": 0,
+    "rejected": {
+      "k": 39,
+      "n": 40,
+      "rate": 0.975,
+      "ci95": [
+        0.8712,
+        0.9956
+      ]
+    },
+    "out_lenient_items": {
+      "k": 165,
+      "n": 200,
+      "rate": 0.825,
+      "ci95": [
+        0.7664,
+        0.8714
+      ]
+    },
+    "out_strict_items": {
+      "k": 200,
+      "n": 200,
+      "rate": 1.0,
+      "ci95": [
+        0.9812,
+        1.0
+      ]
+    },
+    "answers_with_out_lenient": {
+      "k": 39,
+      "n": 40,
+      "rate": 0.975,
+      "ci95": [
+        0.8712,
+        0.9956
+      ]
+    },
+    "items_per_answer": {
+      "mean": 5.0,
+      "min": 5,
+      "max": 5,
+      "outside_3to5": 0
+    }
+  },
+  "menu": {
+    "answers": 50,
+    "reasons": {
+      "ok": 25,
+      "ungrounded": 25
+    },
+    "schema_fail": {
+      "k": 0,
+      "n": 50,
+      "rate": 0.0,
+      "ci95": [
+        0.0,
+        0.0714
+      ]
+    },
+    "call_error": 0,
+    "rejected": {
+      "k": 25,
+      "n": 50,
+      "rate": 0.5,
+      "ci95": [
+        0.3664,
+        0.6336
+      ]
+    },
+    "out_lenient_items": {
+      "k": 45,
+      "n": 240,
+      "rate": 0.1875,
+      "ci95": [
+        0.1432,
+        0.2417
+      ]
+    },
+    "out_strict_items": {
+      "k": 223,
+      "n": 240,
+      "rate": 0.9291666666666667,
+      "ci95": [
+        0.8895,
+        0.9553
+      ]
+    },
+    "answers_with_out_lenient": {
+      "k": 25,
+      "n": 50,
+      "rate": 0.5,
+      "ci95": [
+        0.3664,
+        0.6336
+      ]
+    },
+    "items_per_answer": {
+      "mean": 4.8,
+      "min": 4,
+      "max": 5,
+      "outside_3to5": 0
+    }
+  },
+  "latency_s": {
+    "n": 90,
+    "p50": 1.48,
+    "p95": 1.78,
+    "min": 1.11,
+    "max": 1.94,
+    "over_3x_p50": []
+  }
+}
